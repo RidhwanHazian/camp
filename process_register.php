@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'confg.php';
+require_once 'db_connection.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST['username']);
@@ -15,40 +15,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    try {
-        // Check if username already exists
-        $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ?");
-        $stmt->execute([$username]);
-        if ($stmt->rowCount() > 0) {
-            $_SESSION['error'] = "Username already exists!";
-            header("Location: register.php");
-            exit();
-        }
+    // Check if username already exists
+    $stmt = $conn->prepare("SELECT user_id FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+        $_SESSION['error'] = "Username already exists!";
+        header("Location: register.php");
+        exit();
+    }
+    $stmt->close();
 
-        // Check if email already exists
-        $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->rowCount() > 0) {
-            $_SESSION['error'] = "Email already exists!";
-            header("Location: register.php");
-            exit();
-        }
+    // Check if email already exists
+    $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+        $_SESSION['error'] = "Email already exists!";
+        header("Location: register.php");
+        exit();
+    }
+    $stmt->close();
 
-        // Hash password
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    // Hash password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // Insert new user
-        $stmt = $conn->prepare("INSERT INTO users (username, email, password, role, full_name, phone_no) VALUES (?, ?, ?, 'customer', '', '')");
-        $stmt->execute([$username, $email, $hashed_password]);
-
-        $_SESSION['success'] = "Registration successful! Please login.";
+    // Insert new user
+    $stmt = $conn->prepare("INSERT INTO users (username, email, password, role, full_name, phone_no) VALUES (?, ?, ?, 'customer', '', '')");
+    $stmt->bind_param("sss", $username, $email, $hashed_password);
+    if ($stmt->execute()) {
+        $_SESSION['success_message'] = "Registration successful! Please login.";
         header("Location: login.php");
         exit();
-
-    } catch(PDOException $e) {
-        $_SESSION['error'] = "Registration failed: " . $e->getMessage();
+    } else {
+        $_SESSION['error'] = "Registration failed: " . $stmt->error;
         header("Location: register.php");
         exit();
     }
 }
-?> 
+?>

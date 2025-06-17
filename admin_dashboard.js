@@ -1,15 +1,16 @@
 const ctx = document.getElementById('packageChart').getContext('2d');
-const packageChart = new Chart(ctx, {
+
+new Chart(ctx, {
   type: 'pie',
   data: {
-    labels: ['Package A', 'Package B', 'Package C', 'Package D', 'Package E'],
+    labels: window.packageLabelsData,
     datasets: [{
-      label: 'Packages Chosen',
-      data: window.packageCountsData || [0, 0, 0, 0, 0],
+      label: 'Package Distribution',
+      data: window.packageCountsData,
       backgroundColor: [
-        '#3498db', '#2ecc71', '#e67e22', '#e74c3c', '#9b59b6'
-      ],
-      borderWidth: 1
+        '#1abc9c', '#3498db', '#9b59b6', '#f39c12',
+        '#e74c3c', '#2ecc71', '#34495e', '#fd79a8', '#55efc4'
+      ]
     }]
   },
   options: {
