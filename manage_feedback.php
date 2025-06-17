@@ -1,6 +1,4 @@
-<?php
-require_once 'check_admin_auth.php';
-?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,39 +74,51 @@ require_once 'check_admin_auth.php';
       font-weight: 600;
       margin-bottom: 2rem;
       color: #34495e;
+      text-align: center;
+    }
+
+    .table-container {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+      margin-top: 1.5rem;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      font-size: 15px;
+      min-width: 600px;
     }
 
     th, td {
       padding: 12px 15px;
-      border: 1px solid #ccc;
       text-align: left;
+      border-bottom: 1px solid #e0e0e0;
     }
 
     th {
-      background-color: #f4f4f4;
-    }
-
-    td small {
-      display: block;
-      color: #666;
-      font-size: 0.85em;
-      margin-top: 4px;
+      background-color: #f8f9fa;
+      color: #2c3e50;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.5px;
     }
 
     tr:hover {
-      background-color: #f9f9f9;
+      background-color: #f1f1f1;
+      transition: background 0.2s ease-in-out;
     }
+
 
     td.rating-emoji {
       font-size: 1.8rem;
       text-align: center;
     }
+
   </style>
 </head>
 <body>
@@ -119,98 +129,101 @@ require_once 'check_admin_auth.php';
   <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
   <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Campsites</a>
   <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
-  <a href="customer_feedback.php" class="active"><i class="fas fa-comments"></i> Feedback Customer</a>
+  <a href="manage_feedback.php" class="active"><i class="fas fa-comments"></i> Feedback Customer</a>
   <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
-  <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </a>
 </div>
 
 <div class="content">
   <h1>Customer Feedback</h1>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer Name</th>
+          <th>Package Chosen</th>
+          <th>Feedback</th>
+          <th>Rating</th>
+          <th>Media</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php
+        include 'db_connection.php';
 
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Customer Name</th>
-        <th>Package Chosen</th>
-        <th>Feedback</th>
-        <th>Rating</th>
-        <th>Media</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php
-      include 'db_connection.php';
+        // Debug: Print any MySQL errors
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-      // Debug: Print any MySQL errors
-      mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        try {
+          // Fetch all feedback with booking and package details
+          $sql = "SELECT f.*, b.full_name, b.package_id, p.package_name, p.description
+                  FROM feedback f 
+                  LEFT JOIN bookings b ON f.booking_id = b.booking_id
+                  LEFT JOIN packages p ON b.package_id = p.package_id
+                  ORDER BY f.feedback_id DESC";
 
-      try {
-        // Fetch all feedback with booking and package details
-        $sql = "SELECT f.*, b.full_name, b.package_id, p.package_name, p.description
-                FROM feedback f 
-                LEFT JOIN bookings b ON f.booking_id = b.booking_id
-                LEFT JOIN packages p ON b.package_id = p.package_id
-                ORDER BY f.feedback_id DESC";
-
-        $result = mysqli_query($conn, $sql);
-        
-        if (!$result) {
-          throw new Exception("Query failed: " . mysqli_error($conn));
-        }
-
-        if (mysqli_num_rows($result) > 0) {
-          $counter = 1;
-          while ($row = mysqli_fetch_assoc($result)) {
-            // Debug: Print row data
-            // echo "<pre>"; print_r($row); echo "</pre>";
-            
-            $ratingEmoji = match((int)$row['rating']) {
-              5 => "😍",
-              4 => "😊",
-              3 => "😐",
-              2 => "😕",
-              1 => "😡",
-              default => "❓"
-            };
-
-            $packageName = $row['package_name'] ?? 'Unknown Package';
-            if (!empty($row['description'])) {
-              $packageName .= "<br><small>" . htmlspecialchars($row['description']) . "</small>";
-            }
-
-            echo "<tr>
-                    <td>{$counter}</td>
-                    <td>" . htmlspecialchars($row['full_name'] ?? 'Anonymous') . "</td>
-                    <td>{$packageName}</td>
-                    <td>" . htmlspecialchars($row['comment']) . "</td>
-                    <td class='rating-emoji' title='Rating: {$row['rating']}'>{$ratingEmoji}</td>
-                    <td>";
-
-            // Check if photo exists and display it
-            if (!empty($row['photo_path'])) {
-              $photoPath = htmlspecialchars($row['photo_path']);
-              echo "<a href='{$photoPath}' target='_blank' title='View Photo'>🖼️</a> ";
-            }
-
-            // Check if video exists and display it
-            if (!empty($row['video_path'])) {
-              $videoPath = htmlspecialchars($row['video_path']);
-              echo "<a href='{$videoPath}' target='_blank' title='View Video'>🎥</a>";
-            }
-
-            echo "</td></tr>";
-            $counter++;
+          $result = mysqli_query($conn, $sql);
+          
+          if (!$result) {
+            throw new Exception("Query failed: " . mysqli_error($conn));
           }
-        } else {
-          echo "<tr><td colspan='6'>No feedback found.</td></tr>";
+
+          if (mysqli_num_rows($result) > 0) {
+            $counter = 1;
+            while ($row = mysqli_fetch_assoc($result)) {
+              // Debug: Print row data
+              // echo "<pre>"; print_r($row); echo "</pre>";
+              
+              $ratingEmoji = match((int)$row['rating']) {
+                5 => "😍",
+                4 => "😊",
+                3 => "😐",
+                2 => "😕",
+                1 => "😡",
+                default => "❓"
+              };
+
+              $packageName = $row['package_name'] ?? 'Unknown Package';
+              if (!empty($row['description'])) {
+                $packageName .= "<br><small>" . htmlspecialchars($row['description']) . "</small>";
+              }
+
+              echo "<tr>
+                      <td>{$counter}</td>
+                      <td>" . htmlspecialchars($row['full_name'] ?? 'Anonymous') . "</td>
+                      <td>{$packageName}</td>
+                      <td>" . htmlspecialchars($row['comment']) . "</td>
+                      <td class='rating-emoji' title='Rating: {$row['rating']}'>{$ratingEmoji}</td>
+                      <td>";
+
+              // Check if photo exists and display it
+              if (!empty($row['photo_path'])) {
+                $photoPath = htmlspecialchars($row['photo_path']);
+                echo "<a href='{$photoPath}' target='_blank' title='View Photo'>🖼️</a> ";
+              }
+
+              // Check if video exists and display it
+              if (!empty($row['video_path'])) {
+                $videoPath = htmlspecialchars($row['video_path']);
+                echo "<a href='{$videoPath}' target='_blank' title='View Video'>🎥</a>";
+              }
+
+              echo "</td></tr>";
+              $counter++;
+            }
+          } else {
+            echo "<tr><td colspan='6'>No feedback found.</td></tr>";
+          }
+        } catch (Exception $e) {
+          echo "<tr><td colspan='6'>Error: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
         }
-      } catch (Exception $e) {
-        echo "<tr><td colspan='6'>Error: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
-      }
-      ?>
-    </tbody>
-  </table>
+        ?>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 </body>

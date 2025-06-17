@@ -83,30 +83,40 @@
       margin-bottom: 2rem;
     }
 
+    .table-container {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+      margin-top: 1.5rem;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      font-size: 15px;
+      min-width: 600px;
     }
 
     th, td {
       padding: 12px 15px;
-      border: 1px solid #ccc;
       text-align: left;
-    }
-    .content 
-    {
-      margin-left: 250px;
-      padding: 2.5rem 3rem;
-      width: calc(100% - 250px);
+      border-bottom: 1px solid #e0e0e0;
     }
 
     th {
-      background-color: #f4f4f4;
+      background-color: #f8f9fa;
+      color: #2c3e50;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.5px;
     }
 
     tr:hover {
-      background-color: #f9f9f9;
+      background-color: #f1f1f1;
+      transition: background 0.2s ease-in-out;
     }
   </style>
 </head>
@@ -120,63 +130,67 @@
     <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
     <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
     <a href="customer_payment.php" class="active"><i class="fas fa-credit-card"></i> Customer Payment</a>
-    <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
 </div>
 
 <div class="content">
   <h1>Customer Payments</h1>
-  <table>
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Customer Name</th>
-      <th>Package Chosen</th>
-      <th>Payment Date</th>
-      <th>Total Cost (RM)</th>
-      <th>Phone Number</th>
-    </tr>
-  </thead>
-    <tbody>
-      <?php
-      // Connect to database
-      include 'db_connection.php';
+  <div class="table-container">
+    <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Customer Name</th>
+        <th>Package Chosen</th>
+        <th>Payment Date</th>
+        <th>Total Cost (RM)</th>
+        <th>Phone Number</th>
+      </tr>
+    </thead>
+      <tbody>
+        <?php
+        // Connect to database
+        include 'db_connection.php';
 
-      $sql = "
-          SELECT 
-              b.full_name,
-              b.phone_no,
-              b.package_id,
-              pk.package_name,
-              p.payment_date,
-              p.amount
-          FROM payments p
-          JOIN bookings b ON p.booking_id = b.booking_id
-          JOIN packages pk ON b.package_id = pk.package_id
-          ORDER BY p.payment_date DESC
-      ";
+        $sql = "
+            SELECT 
+                b.full_name,
+                b.phone_no,
+                b.package_id,
+                pk.package_name,
+                p.payment_date,
+                p.amount
+            FROM payments p
+            JOIN bookings b ON p.booking_id = b.booking_id
+            JOIN packages pk ON b.package_id = pk.package_id
+            ORDER BY p.payment_date DESC
+        ";
 
-      $result = mysqli_query($conn, $sql);
+        $result = mysqli_query($conn, $sql);
 
-      if ($result && mysqli_num_rows($result) > 0) {
-          $count = 1;
-          while ($row = mysqli_fetch_assoc($result)) {
-              echo "<tr>
-                  <td>{$count}</td>
-                  <td>" . htmlspecialchars($row['full_name']) . "</td>
-                  <td>" . htmlspecialchars($row['package_name']) . "</td>
-                  <td>" . date('Y-m-d', strtotime($row['payment_date'])) . "</td>
-                  <td>" . number_format($row['amount'], 2) . "</td>
-                  <td>" . htmlspecialchars($row['phone_no']) . "</td>
-              </tr>";
-              $count++;
-          }
-      } else {
-          echo "<tr><td colspan='6'>No customer payments found.</td></tr>";
-      }
-      mysqli_close($conn);
-      ?>
-    </tbody>
-  </table>
+        if ($result && mysqli_num_rows($result) > 0) {
+            $count = 1;
+            while ($row = mysqli_fetch_assoc($result)) {
+                echo "<tr>
+                    <td>{$count}</td>
+                    <td>" . htmlspecialchars($row['full_name']) . "</td>
+                    <td>" . htmlspecialchars($row['package_name']) . "</td>
+                    <td>" . date('Y-m-d', strtotime($row['payment_date'])) . "</td>
+                    <td>" . number_format($row['amount'], 2) . "</td>
+                    <td>" . htmlspecialchars($row['phone_no']) . "</td>
+                </tr>";
+                $count++;
+            }
+        } else {
+            echo "<tr><td colspan='6'>No customer payments found.</td></tr>";
+        }
+        mysqli_close($conn);
+        ?>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 </body>

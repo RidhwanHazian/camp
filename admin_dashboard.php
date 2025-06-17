@@ -1,6 +1,4 @@
-<?php
-require_once 'check_admin_auth.php';
-?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -213,7 +211,9 @@ require_once 'check_admin_auth.php';
     <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
     <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
     <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
-    <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
   </div>
   
   <?php

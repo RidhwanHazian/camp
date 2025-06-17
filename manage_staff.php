@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "1234", "camp");
+$conn = new mysqli("localhost", "root", "", "camp");
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
@@ -185,7 +185,9 @@ $schedule_result = $conn->query($schedule_query);
   <a href="manage_staff.php" class="active"><i class="fas fa-users"></i> Manage Staff</a>
   <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
   <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
-  <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </a>
 </div>
 
 <div class="content">
