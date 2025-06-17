@@ -16,6 +16,7 @@ JOIN staff s ON t.staff_id = s.staff_id
 ORDER BY t.task_date DESC";
 $schedule_result = $conn->query($schedule_query);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

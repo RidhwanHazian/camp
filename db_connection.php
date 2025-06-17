@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
 $username = "root";
-$password = "1234";
+$password = "";
 $dbname = "camp"; // Replace with your DB
 
 $conn = new mysqli($servername, $username, $password, $dbname);
