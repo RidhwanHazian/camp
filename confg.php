@@ -2,7 +2,7 @@
 // Database configuration
 $servername = "localhost";
 $username = "root";  // Default XAMPP username
-$password = "1234";      // Default XAMPP password
+$password = "";      // Default XAMPP password
 $dbname = "camp";    // Your database name
 
 try {

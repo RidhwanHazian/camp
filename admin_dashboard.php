@@ -235,18 +235,29 @@
     $profitQuery = mysqli_query($conn, "SELECT SUM(amount) as total FROM payments");
     $totalProfit = mysqli_fetch_assoc($profitQuery)['total'] ?? 0;
 
-    // Query package distribution
-    $packages = ['A','B','C','D','E'];
+    // Dynamic package distribution
+    $packageLabels = [];
     $packageCounts = [];
 
-    foreach ($packages as $pkg) {
-        $result = mysqli_query($conn, "
-            SELECT COUNT(*) as total 
-            FROM bookings 
-            INNER JOIN packages ON bookings.package_id = packages.package_id 
-            WHERE packages.package_name = 'Package $pkg'
-        ");
-        $packageCounts[] = mysqli_fetch_assoc($result)['total'];
+    $pkgQuery = mysqli_query($conn, "
+      SELECT p.package_name, COUNT(b.booking_id) AS total 
+      FROM packages p 
+      LEFT JOIN bookings b ON b.package_id = p.package_id 
+      GROUP BY p.package_name
+    ");
+
+    $maxCount = 0;
+    $trendingPackages = [];
+
+    while ($row = mysqli_fetch_assoc($pkgQuery)) {
+        $packageLabels[] = $row['package_name'];
+        $packageCounts[] = (int)$row['total'];
+        if ($row['total'] > $maxCount) {
+            $maxCount = $row['total'];
+            $trendingPackages = [$row['package_name']];
+        } elseif ($row['total'] == $maxCount && $maxCount > 0) {
+            $trendingPackages[] = $row['package_name'];
+        }
     }
   ?>
 
@@ -299,6 +310,8 @@
   <script>
     // Make PHP data available to JS
     window.packageCountsData = <?= json_encode($packageCounts) ?>;
+    window.packageLabels = <?= json_encode($packageLabels) ?>;
+    window.trendingPackages = <?= json_encode($trendingPackages) ?>;
   </script>
   <script src="admin_dashboard.js"></script>
 
