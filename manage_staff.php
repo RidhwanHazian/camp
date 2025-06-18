@@ -1,19 +1,10 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "camp");
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
+session_start();                    // Start session after enabling error reporting
+include 'db_connection.php';
+include 'session_check.php';        // Load session check functions
+checkAdminSession();
 
-$schedule_query = "SELECT 
-    s.staff_name,
-    t.task_id,
-    t.task_date,
-    t.task_shiftTime as shift_time,
-    t.task_location as location,
-    t.task_activity as task_description
-FROM task_assignment t 
-JOIN staff s ON t.staff_id = s.staff_id
-ORDER BY t.task_date DESC";
+$schedule_query = "SELECT s.staff_name, b.arrival_date, b.departure_date, b.full_name AS customer_name, b.status, b.booking_id FROM bookings b JOIN staff s ON b.staff_id = s.staff_id ORDER BY b.arrival_date DESC";
 $schedule_result = $conn->query($schedule_query);
 ?>
 
@@ -255,10 +246,10 @@ $schedule_result = $conn->query($schedule_query);
       <thead>
         <tr>
           <th>Staff Name</th>
-          <th>Date</th>
-          <th>Shift Time</th>
-          <th>Location</th>
-          <th>Task Description</th>
+          <th>Date Start</th>
+          <th>Date End</th>
+          <th>Customer</th>
+          <th>Status</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -268,13 +259,13 @@ $schedule_result = $conn->query($schedule_query);
         while ($row = $schedule_result->fetch_assoc()) {
           echo "<tr>
             <td>" . htmlspecialchars($row['staff_name']) . "</td>
-            <td>" . htmlspecialchars($row['task_date']) . "</td>
-            <td>" . htmlspecialchars($row['shift_time']) . "</td>
-            <td>" . htmlspecialchars($row['location']) . "</td>
-            <td>" . htmlspecialchars($row['task_description']) . "</td>
+            <td>" . htmlspecialchars($row['arrival_date']) . "</td>
+            <td>" . htmlspecialchars($row['departure_date']) . "</td>
+            <td>" . htmlspecialchars($row['customer_name']) . "</td>
+            <td>" . htmlspecialchars($row['status']) . "</td>
             <td class='action-buttons'>
-              <a href='edit_schedule.php?id=" . $row['task_id'] . "'>Edit</a>
-              <a href='delete_schedule.php?id=" . $row['task_id'] . "' onclick='return confirm(\"Are you sure you want to delete this schedule?\");'>Delete</a>
+              <a href='edit_schedule.php?id=" . $row['booking_id'] . "'>Edit</a>
+              <a href='delete_schedule.php?id=" . $row['booking_id'] . "' onclick='return confirm(\"Are you sure you want to delete this schedule?\");'>Delete</a>
             </td>
           </tr>";
         }

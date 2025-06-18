@@ -1,6 +1,5 @@
 <?php
-session_start();
-
+//add session_start(); here if not working
 function checkAdminSession() {
     if (!isset($_SESSION['admin_id']) || $_SESSION['role'] !== 'admin') {
         header("Location: login.php");

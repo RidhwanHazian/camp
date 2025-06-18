@@ -1,8 +1,10 @@
 <?php
-include 'session_check.php';
-checkCustomerSession();
 
-require_once 'db_connection.php';
+session_start();                    // Start session after enabling error reporting
+include 'db_connection.php';
+include 'session_check.php';        // Load session check functions
+checkAdminSession(); 
+
 
 // Get all bookings for the user
 $stmt = $conn->prepare("

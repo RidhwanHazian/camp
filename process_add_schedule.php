@@ -1,7 +1,8 @@
 <?php
-include 'session_check.php'; // Include session check functions
-checkAdminSession(); // Ensure only admins can access this page
-require_once 'db_connection.php';
+session_start();                    // Start session after enabling error reporting
+include 'db_connection.php';
+include 'session_check.php';        // Load session check functions
+checkAdminSession();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $staff_id = $_POST['staff_id'];
@@ -39,13 +40,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("iissss", $staff_id, $admin_id, $task_date, $task_shiftTime, $task_location, $task_activity);
 
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Schedule added successfully!";
-        header("Location: add_schedule.php?success=1");
-        exit();
+        // Update the booking to assign the staff
+        $stmt = $conn->prepare("UPDATE bookings SET staff_id = ? WHERE booking_id = ?");
+        $stmt->bind_param("ii", $staff_id, $booking_id);
+
+        if ($stmt->execute()) {
+            $_SESSION['success'] = "Schedule added successfully!";
+            header("Location: add_schedule.php?success=1");
+        } else {
+            $_SESSION['error'] = "Failed to update booking: " . $stmt->error;
+            header("Location: add_schedule.php?error=1");
+        }
     } else {
         $_SESSION['error'] = "Failed to add schedule: " . $stmt->error;
         header("Location: add_schedule.php?error=1");
-        exit();
     }
+    exit();
 }
 ?>

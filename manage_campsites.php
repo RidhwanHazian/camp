@@ -1,5 +1,8 @@
 <?php
-include 'db_connection.php';
+  session_start();                    // Start session after enabling error reporting
+  include 'db_connection.php';
+  include 'session_check.php';        // Load session check functions
+  checkAdminSession(); 
 ?>
 <!DOCTYPE html>
 <html lang="en">

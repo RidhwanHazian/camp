@@ -1,6 +1,8 @@
 <?php
-session_start();
-require_once 'confg.php';
+session_start();                    // Start session after enabling error reporting
+include 'db_connection.php';
+include 'session_check.php';        // Load session check functions
+checkAdminSession(); 
 require_once 'notifications_function.php';
 
 // Set JSON header

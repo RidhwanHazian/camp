@@ -1,9 +1,8 @@
 <?php
-include 'session_check.php';
-checkAdminOrStaffSession(); // Allow both admin and staff to edit bookings
-
-require_once 'db_connection.php';
-
+session_start();                    // Start session after enabling error reporting
+include 'db_connection.php';
+include 'session_check.php';        // Load session check functions
+checkAdminSession();
 $booking_id = isset($_GET['id']) ? $_GET['id'] : null;
 
 if (!$booking_id) {

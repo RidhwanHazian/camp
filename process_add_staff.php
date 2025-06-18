@@ -1,8 +1,8 @@
 <?php
-session_start();
+session_start();                    // Start session after enabling error reporting
 include 'db_connection.php';
-include 'session_check.php'; // Include session check functions
-checkAdminSession(); // Ensure only admins can access this page
+include 'session_check.php';        // Load session check functions
+checkAdminSession(); 
 
 // Check if form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
