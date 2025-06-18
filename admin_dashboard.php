@@ -236,26 +236,18 @@
     $totalProfit = mysqli_fetch_assoc($profitQuery)['total'] ?? 0;
 
     // Query package distribution
-    $packageNames = [];
+    $packages = ['A','B','C','D','E'];
     $packageCounts = [];
 
-    $packageResult = mysqli_query($conn, "SELECT package_id, package_name FROM packages ORDER BY package_id");
-
-    while ($row = mysqli_fetch_assoc($packageResult)) {
-        $package_id = $row['package_id'];
-        $package_name = $row['package_name'];
-        $packageNames[] = $package_name;
-
-        $countResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM bookings WHERE package_id = $package_id");
-        $count = mysqli_fetch_assoc($countResult)['total'];
-        $packageCounts[] = (int)$count;
+    foreach ($packages as $pkg) {
+        $result = mysqli_query($conn, "
+            SELECT COUNT(*) as total 
+            FROM bookings 
+            INNER JOIN packages ON bookings.package_id = packages.package_id 
+            WHERE packages.package_name = 'Package $pkg'
+        ");
+        $packageCounts[] = mysqli_fetch_assoc($result)['total'];
     }
-
-    // Find the trending package
-    $maxCount = max($packageCounts);
-    $trendingPackage = $maxCount > 0
-      ? $packageNames[array_search($maxCount, $packageCounts)]
-      : 'No Bookings Yet';
   ?>
 
 
@@ -298,7 +290,7 @@
       <div id="trending-card" class="card">
         <div id="trending-badge" class="badge">🔥 Trending</div>
         <h3>Most Trending Package</h3>
-          <div id="trending-value" class="value"><?= $trendingPackage ?></div>
+          <div id="trending-value" class="value">Loading...</div>
       </div>
     </div>
   </div>
@@ -306,8 +298,7 @@
     <!-- Chart.js Script -->
   <script>
     // Make PHP data available to JS
-      window.packageCountsData = <?= json_encode($packageCounts) ?>;
-      window.packageLabelsData = <?= json_encode($packageNames) ?>;
+    window.packageCountsData = <?= json_encode($packageCounts) ?>;
   </script>
   <script src="admin_dashboard.js"></script>
 
