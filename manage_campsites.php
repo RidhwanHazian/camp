@@ -188,6 +188,7 @@
           <th>Duration</th>
           <th>Activities</th>
           <th>Location</th>
+          <th>Slot Available</th> <!-- NEW -->
           <th>Price (RM)</th>
           <th>Actions</th>
         </tr>
@@ -199,11 +200,11 @@
       while ($camp = mysqli_fetch_assoc($campsite_result)) {
           $camp_id = $camp['camp_id'];
           $package_sql = "
-              SELECT p.*, pp.adult_price, pp.child_price
-              FROM campsite_packages cp
-              JOIN packages p ON cp.package_id = p.package_id
-              LEFT JOIN package_prices pp ON p.package_id = pp.package_id
-              WHERE cp.camp_id = $camp_id
+            SELECT p.*, cp.slot_available, pp.adult_price, pp.child_price
+            FROM campsite_packages cp
+            JOIN packages p ON cp.package_id = p.package_id
+            LEFT JOIN package_prices pp ON p.package_id = pp.package_id
+            WHERE cp.camp_id = $camp_id
           ";
           $package_result = mysqli_query($conn, $package_sql);
 
@@ -229,6 +230,7 @@
                       <td>" . htmlspecialchars($package['duration']) . "</td>
                       <td>" . htmlspecialchars(implode(', ', $activities)) . "</td>
                       <td>" . htmlspecialchars($camp['camp_location']) . "</td>
+                      <td>" . (int)$package['slot_available'] . " people</td>
                       <td>Adult: RM " . number_format($package['adult_price'], 2) . "<br>Child: RM " . number_format($package['child_price'], 2) . "</td>
                       <td class='action-buttons'>
                           <a href='edit_campsite.php?id=" . $camp['camp_id'] . "'>Edit</a>

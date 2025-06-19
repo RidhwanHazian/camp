@@ -1,20 +1,19 @@
 <?php
-session_start();                    // Start session after enabling error reporting
+session_start();
 include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession(); 
+include 'session_check.php';
+checkAdminSession();
 
 if (!isset($_GET['id'])) {
     header('Location: manage_campsites.php');
     exit();
 }
 
-$id = mysqli_real_escape_string($conn, $_GET['id']);
+$camp_id = mysqli_real_escape_string($conn, $_GET['id']);
 $error = '';
 
-// --- Fetch existing data ---
 // Fetch campsite details
-$campsite_sql = "SELECT camp_name, camp_location FROM campsites WHERE camp_id = '$id'";
+$campsite_sql = "SELECT camp_name, camp_location FROM campsites WHERE camp_id = '$camp_id'";
 $campsite_result = mysqli_query($conn, $campsite_sql);
 
 if (mysqli_num_rows($campsite_result) == 0) {
@@ -23,125 +22,78 @@ if (mysqli_num_rows($campsite_result) == 0) {
 }
 $campsite_data = mysqli_fetch_assoc($campsite_result);
 
-// Fetch the *first* package linked to this campsite (assuming one primary package for this edit page)
-$linked_package_id = null;
-$package_link_sql = "SELECT package_id FROM campsite_packages WHERE camp_id = '$id' LIMIT 1";
-$package_link_result = mysqli_query($conn, $package_link_sql);
-if ($package_link_row = mysqli_fetch_assoc($package_link_result)) {
-    $linked_package_id = $package_link_row['package_id'];
-}
+// Fetch linked package
+$linked_package_sql = "
+    SELECT cp.package_id, p.package_name, p.description, p.duration, cp.slot_available,
+           pp.adult_price, pp.child_price
+    FROM campsite_packages cp
+    JOIN packages p ON cp.package_id = p.package_id
+    LEFT JOIN package_prices pp ON p.package_id = pp.package_id
+    WHERE cp.camp_id = '$camp_id'
+    LIMIT 1
+";
+$linked_package_result = mysqli_query($conn, $linked_package_sql);
+$package_data = mysqli_fetch_assoc($linked_package_result);
+$package_id = $package_data['package_id'] ?? null;
 
-$package_data = [
-    'package_name' => '',
-    'description' => '',
-    'duration' => '',
-];
-$pricing_data = [
-    'adult_price' => 0.00,
-    'child_price' => 0.00,
-];
+// Fetch current activities
 $current_activities = [];
-
-if ($linked_package_id) {
-    // Fetch package details
-    $package_sql = "SELECT package_name, description, duration FROM packages WHERE package_id = '$linked_package_id'";
-    $package_result = mysqli_query($conn, $package_sql);
-    $package_data = mysqli_fetch_assoc($package_result);
-
-    // Fetch pricing details
-    $pricing_sql = "SELECT adult_price, child_price FROM package_prices WHERE package_id = '$linked_package_id'";
-    $pricing_result = mysqli_query($conn, $pricing_sql);
-    if (mysqli_num_rows($pricing_result) > 0) {
-        $pricing_data = mysqli_fetch_assoc($pricing_result);
-    }
-
-    // Fetch activities for this package
+if ($package_id) {
     $activities_sql = "
         SELECT a.activity_name
         FROM package_activities pa
         JOIN activities a ON pa.activity_id = a.activity_id
-        WHERE pa.package_id = '$linked_package_id'
+        WHERE pa.package_id = '$package_id'
     ";
     $activities_result = mysqli_query($conn, $activities_sql);
-    while ($activity_row = mysqli_fetch_assoc($activities_result)) {
-        $current_activities[] = $activity_row['activity_name'];
+    while ($row = mysqli_fetch_assoc($activities_result)) {
+        $current_activities[] = $row['activity_name'];
     }
 }
 
-// --- Handle form submission ---
+// --- Form Submission ---
 if (isset($_POST['submit'])) {
     mysqli_begin_transaction($conn);
     try {
-        // Update campsite
-        $camp_name = mysqli_real_escape_string($conn, $_POST['camp_name']);
         $camp_location = mysqli_real_escape_string($conn, $_POST['camp_location']);
-        $update_camp_sql = "UPDATE campsites SET camp_name = '$camp_name', camp_location = '$camp_location' WHERE camp_id = '$id'";
-        mysqli_query($conn, $update_camp_sql);
+        $slot_available = intval($_POST['slot_available']);
+        $adult_price = floatval($_POST['adult_price']);
+        $child_price = floatval($_POST['child_price']);
 
-        // Update or Insert Package
-        $package_name = mysqli_real_escape_string($conn, $_POST['package_name']);
-        $description = mysqli_real_escape_string($conn, $_POST['description']);
-        $duration = mysqli_real_escape_string($conn, $_POST['duration']);
+        // Update location
+        mysqli_query($conn, "UPDATE campsites SET camp_location = '$camp_location' WHERE camp_id = '$camp_id'");
 
-        $current_package_id = $linked_package_id;
+        // Update slot
+        mysqli_query($conn, "UPDATE campsite_packages SET slot_available = '$slot_available' WHERE camp_id = '$camp_id' AND package_id = '$package_id'");
 
-        if ($current_package_id) {
-            $update_package_sql = "UPDATE packages SET package_name = '$package_name', description = '$description', duration = '$duration' WHERE package_id = '$current_package_id'";
-            mysqli_query($conn, $update_package_sql);
+        // Update or insert price
+        $check_price = mysqli_query($conn, "SELECT price_id FROM package_prices WHERE package_id = '$package_id'");
+        if (mysqli_num_rows($check_price) > 0) {
+            mysqli_query($conn, "UPDATE package_prices SET adult_price = '$adult_price', child_price = '$child_price' WHERE package_id = '$package_id'");
         } else {
-            // If no package was linked initially, create a new one
-            $insert_package_sql = "INSERT INTO packages (package_name, description, duration) VALUES ('$package_name', '$description', '$duration')";
-            mysqli_query($conn, $insert_package_sql);
-            $current_package_id = mysqli_insert_id($conn);
-            // Link the new package to the campsite
-            mysqli_query($conn, "INSERT INTO campsite_packages (camp_id, package_id) VALUES ('$id', '$current_package_id')");
-        }
-        
-        // Update or Insert Package Prices
-        $adult_price = mysqli_real_escape_string($conn, $_POST['adult_price']);
-        $child_price = mysqli_real_escape_string($conn, $_POST['child_price']);
-        
-        $check_pricing_sql = "SELECT price_id FROM package_prices WHERE package_id = '$current_package_id'";
-        $check_pricing_result = mysqli_query($conn, $check_pricing_sql);
-
-        if (mysqli_num_rows($check_pricing_result) > 0) {
-            // Update existing pricing
-            $update_pricing_sql = "UPDATE package_prices SET adult_price = '$adult_price', child_price = '$child_price' WHERE package_id = '$current_package_id'";
-            mysqli_query($conn, $update_pricing_sql);
-        } else {
-            // Insert new pricing
-            $insert_pricing_sql = "INSERT INTO package_prices (package_id, adult_price, child_price) VALUES ('$current_package_id', '$adult_price', '$child_price')";
-            mysqli_query($conn, $insert_pricing_sql);
+            mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price) VALUES ('$package_id', '$adult_price', '$child_price')");
         }
 
-        // Handle Activities: Delete old links and re-insert new ones
-        if ($current_package_id) {
-            mysqli_query($conn, "DELETE FROM package_activities WHERE package_id = '$current_package_id'");
-        }
-
-        if (isset($_POST['activities']) && is_array($_POST['activities'])) {
-            foreach ($_POST['activities'] as $activity_name) {
-                $act_name = mysqli_real_escape_string($conn, $activity_name); // Assuming direct activity name input
-                
-                // Check if activity exists in 'activities' table
-                $result_act = mysqli_query($conn, "SELECT activity_id FROM activities WHERE activity_name='$act_name'");
-                if (mysqli_num_rows($result_act) > 0) {
-                    $activity_row = mysqli_fetch_assoc($result_act);
-                    $activity_id = $activity_row['activity_id'];
+        // Update activities
+        mysqli_query($conn, "DELETE FROM package_activities WHERE package_id = '$package_id'");
+        if (isset($_POST['activities'])) {
+            foreach ($_POST['activities'] as $activity) {
+                $act = mysqli_real_escape_string($conn, $activity);
+                $check_act = mysqli_query($conn, "SELECT activity_id FROM activities WHERE activity_name = '$act'");
+                if (mysqli_num_rows($check_act) > 0) {
+                    $act_row = mysqli_fetch_assoc($check_act);
+                    $act_id = $act_row['activity_id'];
                 } else {
-                    // Insert new activity into 'activities' table
-                    mysqli_query($conn, "INSERT INTO activities (activity_name) VALUES ('$act_name')");
-                    $activity_id = mysqli_insert_id($conn);
+                    mysqli_query($conn, "INSERT INTO activities (activity_name) VALUES ('$act')");
+                    $act_id = mysqli_insert_id($conn);
                 }
-                // Link activity to package in 'package_activities' table
-                mysqli_query($conn, "INSERT INTO package_activities (package_id, activity_id) VALUES ('$current_package_id', '$activity_id')");
+                mysqli_query($conn, "INSERT INTO package_activities (package_id, activity_id) VALUES ('$package_id', '$act_id')");
             }
         }
 
         mysqli_commit($conn);
-    header("Location: manage_campsites.php");
-    exit();
-
+        header("Location: manage_campsites.php");
+        exit();
     } catch (Exception $e) {
         mysqli_rollback($conn);
         $error = "Error: " . $e->getMessage();
@@ -152,115 +104,101 @@ if (isset($_POST['submit'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Edit Campsite & Package</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>Edit Campsite</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-    body { background-color: #f5f7fa; padding: 2.5rem 3rem; color: #333; min-height: 100vh; }
-    h2 { font-size: 2rem; font-weight: 600; color: #34495e; margin-bottom: 2rem; text-align: center; }
-    form { background: #fff; max-width: 700px; margin: 0 auto; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
-    label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2c3e50; font-size: 0.9rem; }
-    input[type="text"], input[type="number"] { width: 100%; padding: 10px 12px; margin-bottom: 1.5rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; transition: border-color 0.3s ease; }
-    input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: #2980b9; }
-    .price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .activity-container { margin-bottom: 1.5rem; }
-    .activity-row { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
+    body { font-family: Poppins, sans-serif; padding: 2rem; background: #f5f5f5; }
+    h2 { text-align: center; margin-bottom: 1rem; }
+    form { background: #fff; padding: 2rem; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { font-weight: 600; margin-top: 1rem; display: block; }
+    input[type=text], input[type=number] {
+        width: 100%; padding: 0.6rem; margin-top: 0.3rem; border-radius: 6px; border: 1px solid #ccc;
+    }
+    input[readonly] { background-color: #eee; }
+    .activity-row { display: flex; margin-bottom: 0.5rem; gap: 0.5rem; }
     .activity-row input { flex: 1; }
-    .remove-activity { background: #e74c3c; color: white; border: none; padding: 0 1rem; border-radius: 6px; cursor: pointer; }
-    .add-activity { background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-bottom: 1.5rem; }
-    input[type="submit"] { width: 100%; padding: 12px; background-color: #27ae60; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: background-color 0.3s ease; }
-    input[type="submit"]:hover { background-color: #219150; }
-    a { display: inline-block; margin-top: 1.5rem; text-align: center; width: 100%; color: #2980b9; font-weight: 600; text-decoration: none; transition: text-decoration 0.3s ease; }
-    a:hover { text-decoration: underline; }
-    .error { color: #e74c3c; margin-bottom: 1rem; text-align: center; }
+    button.remove-activity, .add-activity {
+        padding: 0.4rem 0.8rem; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;
+    }
+    .add-activity { background: #3498db; margin-top: 1rem; }
+    input[type=submit] {
+        background: #27ae60; color: white; padding: 0.8rem 1.2rem; border: none;
+        border-radius: 6px; cursor: pointer; margin-top: 1.5rem; width: 100%;
+        font-size: 1rem;
+    }
+    .error { color: red; margin-top: 1rem; text-align: center; }
+    .back-button {
+      display: inline-block;
+      margin-top: 1.5rem;
+      text-align: center;
+      width: 100%;
+      color: #2980b9;
+      font-weight: 600;
+      text-decoration: none;
+      font-family: 'Poppins', sans-serif;
+      transition: text-decoration 0.3s ease;
+    }
+
+    .back-button:hover {
+      text-decoration: underline;
+    }
+
   </style>
   <script>
-    let activityIndex = 0; // Initialize with 0 as we'll loop existing activities
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set initial index based on pre-populated activities
-        activityIndex = document.querySelectorAll('.activity-row').length;
-    });
-
     function addActivity() {
-      const activitiesDiv = document.getElementById('activities');
-      const newActivity = document.createElement('div');
-      newActivity.className = 'activity-row';
-      newActivity.innerHTML = `
-        <input type="text" name="activities[]" placeholder="Activity Name" required>
-        <button type="button" class="remove-activity" onclick="removeActivity(this)">Remove</button>
+      const container = document.getElementById('activities');
+      const row = document.createElement('div');
+      row.classList.add('activity-row');
+      row.innerHTML = `
+        <input type="text" name="activities[]" required placeholder="Activity Name">
+        <button type="button" class="remove-activity" onclick="this.parentElement.remove()">Remove</button>
       `;
-      activitiesDiv.appendChild(newActivity);
-      activityIndex++;
-    }
-    function removeActivity(btn) {
-      if (document.querySelectorAll('.activity-row').length > 1) {
-        btn.parentElement.remove();
-      } else {
-        alert('You must have at least one activity.');
-      }
+      container.appendChild(row);
     }
   </script>
 </head>
 <body>
-  <h2>Edit Campsite & Package</h2>
-  <?php if (isset($error)): ?>
-    <div class="error"><?php echo $error; ?></div>
-  <?php endif; ?>
-  <form method="post">
-    <label for="camp_name">Campsite Name:</label>
-    <input type="text" id="camp_name" name="camp_name" required value="<?php echo htmlspecialchars($campsite_data['camp_name'] ?? ''); ?>" />
+<h2>Edit Campsite & Package Info</h2>
+<?php if ($error): ?><div class="error"><?= $error ?></div><?php endif; ?>
+<form method="post">
+  <label>Campsite Name</label>
+  <input type="text" readonly value="<?= htmlspecialchars($campsite_data['camp_name']) ?>">
 
-    <label for="camp_location">Campsite Location:</label>
-    <input type="text" id="camp_location" name="camp_location" required value="<?php echo htmlspecialchars($campsite_data['camp_location'] ?? ''); ?>" />
+  <label>Campsite Location</label>
+  <input type="text" name="camp_location" value="<?= htmlspecialchars($campsite_data['camp_location']) ?>" required>
 
-    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #eee;">
+  <label>Package Name</label>
+  <input type="text" readonly value="<?= htmlspecialchars($package_data['package_name'] ?? '') ?>">
 
-    <h3>Package Details</h3>
-    <label for="package_name">Package Name:</label>
-    <input type="text" id="package_name" name="package_name" required value="<?php echo htmlspecialchars($package_data['package_name'] ?? ''); ?>" />
+  <label>Package Description</label>
+  <input type="text" readonly value="<?= htmlspecialchars($package_data['description'] ?? '') ?>">
 
-    <label for="description">Package Description:</label>
-    <input type="text" id="description" name="description" value="<?php echo htmlspecialchars($package_data['description'] ?? ''); ?>" />
+  <label>Package Duration</label>
+  <input type="text" readonly value="<?= htmlspecialchars($package_data['duration'] ?? '') ?>">
 
-    <label for="duration">Package Duration:</label>
-    <input type="text" id="duration" name="duration" value="<?php echo htmlspecialchars($package_data['duration'] ?? ''); ?>" />
+  <label>Slot Available</label>
+  <input type="number" name="slot_available" value="<?= htmlspecialchars($package_data['slot_available'] ?? '0') ?>" min="1" required>
 
-    <div class="price-inputs">
-      <div>
-        <label for="adult_price">Adult Price (RM):</label>
-        <input type="number" step="0.01" id="adult_price" name="adult_price" required value="<?php echo htmlspecialchars($pricing_data['adult_price'] ?? '0.00'); ?>" />
+  <label>Adult Price (RM)</label>
+  <input type="number" name="adult_price" step="0.01" value="<?= htmlspecialchars($package_data['adult_price'] ?? '0.00') ?>" required>
+
+  <label>Child Price (RM)</label>
+  <input type="number" name="child_price" step="0.01" value="<?= htmlspecialchars($package_data['child_price'] ?? '0.00') ?>" required>
+
+  <label>Activities</label>
+  <div id="activities">
+    <?php foreach ($current_activities as $act): ?>
+      <div class="activity-row">
+        <input type="text" name="activities[]" value="<?= htmlspecialchars($act) ?>" required>
+        <button type="button" class="remove-activity" onclick="this.parentElement.remove()">Remove</button>
       </div>
-      <div>
-        <label for="child_price">Child Price (RM):</label>
-        <input type="number" step="0.01" id="child_price" name="child_price" required value="<?php echo htmlspecialchars($pricing_data['child_price'] ?? '0.00'); ?>" />
-      </div>
-    </div>
+    <?php endforeach; ?>
+  </div>
+  <button type="button" class="add-activity" onclick="addActivity()">+ Add Activity</button>
 
-    <div class="activity-container">
-      <label>Activities:</label>
-      <div id="activities">
-        <?php if (!empty($current_activities)): ?>
-            <?php foreach ($current_activities as $activity_name): ?>
-                <div class="activity-row">
-                    <input type="text" name="activities[]" placeholder="Activity Name" value="<?php echo htmlspecialchars($activity_name); ?>" required>
-                    <button type="button" class="remove-activity" onclick="removeActivity(this)">Remove</button>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <div class="activity-row">
-                <input type="text" name="activities[]" placeholder="Activity Name" required>
-                <button type="button" class="remove-activity" onclick="removeActivity(this)">Remove</button>
-            </div>
-        <?php endif; ?>
-      </div>
-      <button type="button" class="add-activity" onclick="addActivity()">+ Add Another Activity</button>
-    </div>
+  <input type="submit" name="submit" value="Update">
+</form>
+<a href="manage_campsites.php" class="back-button">← Back to Campsite Management</a>
 
-    <input type="submit" name="submit" value="Update Campsite & Package" />
-  </form>
-
-  <a href="manage_campsites.php">← Back to Campsite Management</a>
 </body>
 </html>
