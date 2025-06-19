@@ -1,7 +1,7 @@
 <?php
-session_start();                    // Start session after enabling error reporting
+session_start();
 include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
+include 'session_check.php';
 checkAdminSession();
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -10,22 +10,21 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
-$id = intval($_GET['id']);
+$task_id = intval($_GET['id']);
 
 try {
-    // Unassign staff from booking instead of deleting the booking
-    $stmt = $conn->prepare("UPDATE bookings SET staff_id = NULL WHERE booking_id = ?");
-    $stmt->bind_param("i", $id);
-    
+    $stmt = $conn->prepare("DELETE FROM task_assignment WHERE task_id = ?");
+    $stmt->bind_param("i", $task_id);
+
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Staff unassigned from booking successfully!";
+        $_SESSION['success'] = "Schedule deleted successfully!";
     } else {
-        $_SESSION['error'] = "Error unassigning staff: " . $stmt->error;
+        $_SESSION['error'] = "Error deleting schedule: " . $stmt->error;
     }
-    
+
     $stmt->close();
 } catch (Exception $e) {
-    $_SESSION['error'] = "Error unassigning staff: " . $e->getMessage();
+    $_SESSION['error'] = "Error deleting schedule: " . $e->getMessage();
 }
 
 header("Location: manage_staff.php");
