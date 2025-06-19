@@ -173,6 +173,22 @@ $schedule_result = $conn->query($schedule_query);
     .action-buttons a:hover {
       text-decoration: underline;
     }
+
+    .section-buttons button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .section-buttons button:hover {
+      background-color: #2980b9;
+    }
   </style>
 </head>
 <body>
@@ -192,9 +208,14 @@ $schedule_result = $conn->query($schedule_query);
 
 <div class="content">
   <h1>Manage Staff</h1>
+  <div class="section-buttons" style="text-align: center; margin-bottom: 2rem;">
+    <button onclick="scrollToSection('staff-section')">Staff List</button>
+    <button onclick="scrollToSection('schedule-section')">Staff Schedule</button>
+    <button onclick="scrollToSection('facility-section')">Assigned Facilities</button>
+  </div>
 
   <!-- Staff Section -->
-  <div class="section-header">
+  <div id="staff-section" class="section-header">
     <div class="search-box">
       <input type="text" placeholder="Search staff...">
     </div>
@@ -243,7 +264,7 @@ $schedule_result = $conn->query($schedule_query);
   </div>
 
   <!-- Schedule Section -->
-  <div class="section-header">
+  <div id="schedule-section" class="section-header">
     <div class="search-box">
       <input type="text" placeholder="Search schedule...">
     </div>
@@ -287,7 +308,7 @@ $schedule_result = $conn->query($schedule_query);
   </div>
 
   <!-- Assign Facilities Section -->
-  <div class="section-header">
+  <div id="facility-section" class="section-header">
     <div class="search-box">
       <input type="text" placeholder="Search facility assignments...">
     </div>
@@ -301,6 +322,7 @@ $schedule_result = $conn->query($schedule_query);
           <th>Staff Name</th>
           <th>Facility Name</th>
           <th>Actions</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
@@ -330,5 +352,15 @@ $schedule_result = $conn->query($schedule_query);
     </table>
   </div>
 </div>
+
+<script>
+  function scrollToSection(id) {
+    const section = document.getElementById(id);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+</script>
+
 </body>
 </html>
