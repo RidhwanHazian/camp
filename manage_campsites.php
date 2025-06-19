@@ -163,7 +163,7 @@
     <h2>Admin</h2>
     <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
     <a href="manage_bookings.php" ><i class="fas fa-calendar-check"></i> Manage Bookings</a>
-    <a href="manage_campsites.php" class="active"><i class="fas fa-campground"></i> Manage Campsites</a>
+    <a href="manage_campsites.php" class="active"><i class="fas fa-campground"></i> Manage Packages</a>
     <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
     <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
     <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
@@ -173,83 +173,62 @@
   </div>
 
 <div class="content">
-  <h1>Manage Campsites</h1>
+  <h1>Manage Packages</h1>
 
-  <a class="add-button" href="add_campsite.php">+ Add New Campsite</a>
+  <a class="add-button" href="add_campsite.php">+ Add New Package</a>
 
   <div class="table-container">
     <table>
       <thead>
         <tr>
           <th>Bil</th>
-          <th>Campsite Name</th>
           <th>Package Name</th>
           <th>Description</th>
           <th>Duration</th>
           <th>Activities</th>
-          <th>Location</th>
-          <th>Slot Available</th> <!-- NEW -->
           <th>Price (RM)</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
       <?php
-      $count = 1;
-      $campsite_result = mysqli_query($conn, "SELECT * FROM campsites ORDER BY camp_id ASC");
-      while ($camp = mysqli_fetch_assoc($campsite_result)) {
-          $camp_id = $camp['camp_id'];
-          $package_sql = "
-            SELECT p.*, cp.slot_available, pp.adult_price, pp.child_price
-            FROM campsite_packages cp
-            JOIN packages p ON cp.package_id = p.package_id
-            LEFT JOIN package_prices pp ON p.package_id = pp.package_id
-            WHERE cp.camp_id = $camp_id
-          ";
-          $package_result = mysqli_query($conn, $package_sql);
+      $package_result = mysqli_query($conn, "
+          SELECT 
+              p.package_id,
+              p.package_name,
+              p.description,
+              p.duration,
+              GROUP_CONCAT(a.activity_name SEPARATOR ', ') AS activities,
+              pp.adult_price,
+              pp.child_price
+          FROM packages p
+          LEFT JOIN package_activities pa ON p.package_id = pa.package_id
+          LEFT JOIN activities a ON pa.activity_id = a.activity_id
+          LEFT JOIN package_prices pp ON p.package_id = pp.package_id
+          GROUP BY p.package_id
+          ORDER BY p.package_id ASC
+      ");
 
-          if (mysqli_num_rows($package_result) > 0) {
-              while ($package = mysqli_fetch_assoc($package_result)) {
-                  $package_id = $package['package_id'];
-                  $activity_sql = "
-                      SELECT a.activity_name
-                      FROM package_activities pa
-                      JOIN activities a ON pa.activity_id = a.activity_id
-                      WHERE pa.package_id = $package_id
-                  ";
-                  $activity_result = mysqli_query($conn, $activity_sql);
-                  $activities = [];
-                  while ($act = mysqli_fetch_assoc($activity_result)) {
-                      $activities[] = $act['activity_name'];
-                  }
-                  echo "<tr>
-                      <td>{$count}</td>
-                      <td>" . htmlspecialchars($camp['camp_name']) . "</td>
-                      <td>" . htmlspecialchars($package['package_name']) . "</td>
-                      <td>" . htmlspecialchars($package['description']) . "</td>
-                      <td>" . htmlspecialchars($package['duration']) . "</td>
-                      <td>" . htmlspecialchars(implode(', ', $activities)) . "</td>
-                      <td>" . htmlspecialchars($camp['camp_location']) . "</td>
-                      <td>" . (int)$package['slot_available'] . " people</td>
-                      <td>Adult: RM " . number_format($package['adult_price'], 2) . "<br>Child: RM " . number_format($package['child_price'], 2) . "</td>
-                      <td class='action-buttons'>
-                          <a href='edit_campsite.php?id=" . $camp['camp_id'] . "'>Edit</a>
-                          <a href='delete_campsite.php?id=" . $camp['camp_id'] . "' onclick='return confirm(\"Are you sure you want to delete this campsite?\");'>Delete</a>
-                      </td>
-                  </tr>";
-                  $count++;
-              }
-          } else {
-              // If no packages, show the campsite row with empty package/activity/price
-              echo "<tr>
-                  <td>{$count}</td>
-                  <td>" . htmlspecialchars($camp['camp_name']) . "</td>
-                  <td colspan='7' style='text-align:center;'>No packages assigned</td>
-              </tr>";
-              $count++;
-          }
+      $count = 1;
+      while ($package = mysqli_fetch_assoc($package_result)) {
+          $price = "Adult: RM " . number_format($package['adult_price'] ?? 0, 2) . "<br>Child: RM " . number_format($package['child_price'] ?? 0, 2);
+          
+          echo "<tr>
+              <td>{$count}</td>
+              <td>" . htmlspecialchars($package['package_name']) . "</td>
+              <td>" . htmlspecialchars($package['description']) . "</td>
+              <td>" . htmlspecialchars($package['duration']) . "</td>
+              <td>" . htmlspecialchars($package['activities'] ?? '-') . "</td>
+              <td>{$price}</td>
+              <td class='action-buttons'>
+                  <a href='edit_campsite.php?id={$package['package_id']}'>Edit</a>
+                  <a href='#' onclick='confirmCampsiteDelete({$package['package_id']})'>Delete</a>
+              </td>
+          </tr>";
+          $count++;
       }
       ?>
+
       </tbody>
     </table>
   </div>

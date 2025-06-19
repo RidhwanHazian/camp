@@ -212,7 +212,7 @@ checkAdminSession();
     <h2>Admin</h2>
     <a href="admin_dashboard.php" class="active"><i class="fas fa-home"></i> Dashboard</a>
     <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
-    <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Campsites</a>
+    <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Packages</a>
     <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
     <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
     <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
@@ -227,10 +227,6 @@ checkAdminSession();
     // Query total bookings
     $bookingQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM bookings");
     $bookingCount = mysqli_fetch_assoc($bookingQuery)['total'];
-
-    // Query total campsites
-    $campsiteQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM campsites");
-    $campsiteCount = mysqli_fetch_assoc($campsiteQuery)['total'];
 
     // Query total staff
     $staffQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM staff");
@@ -278,10 +274,6 @@ checkAdminSession();
       <div class="card">
         <h3>Total Bookings</h3>
         <div class="value"><?= $bookingCount ?></div>
-      </div>
-      <div class="card">
-        <h3>Total Campsites</h3>
-        <div class="value"><?= $campsiteCount ?></div>
       </div>
       <div class="card">
         <h3>Staff Members</h3>

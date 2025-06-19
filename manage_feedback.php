@@ -132,7 +132,7 @@
   <h2>Admin</h2>
   <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
   <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
-  <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Campsites</a>
+  <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Packages</a>
   <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
   <a href="manage_feedback.php" class="active"><i class="fas fa-comments"></i> Feedback Customer</a>
   <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
