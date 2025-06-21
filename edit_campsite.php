@@ -18,55 +18,65 @@ $package_sql = "SELECT * FROM packages WHERE package_id = $package_id";
 $package_result = mysqli_query($conn, $package_sql);
 $package = mysqli_fetch_assoc($package_result);
 
-// Fetch price
+// Fetch price info
 $price_result = mysqli_query($conn, "SELECT * FROM package_prices WHERE package_id = $package_id");
 $price = mysqli_fetch_assoc($price_result);
-
-// Fetch all activities
-$all_activities_result = mysqli_query($conn, "SELECT * FROM activities");
-$activity_options = [];
-while ($row = mysqli_fetch_assoc($all_activities_result)) {
-    $activity_options[] = $row;
-}
-
-// Fetch selected activities
-$current_activities_result = mysqli_query($conn, "
-    SELECT a.activity_id, a.activity_name
-    FROM package_activities pa
-    JOIN activities a ON pa.activity_id = a.activity_id
-    WHERE pa.package_id = $package_id
-");
-$current_activities = [];
-while ($act = mysqli_fetch_assoc($current_activities_result)) {
-    $current_activities[] = $act;
-}
 
 // Handle update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     $description = mysqli_real_escape_string($conn, $_POST['description']);
     $duration = mysqli_real_escape_string($conn, $_POST['duration']);
+    $activities = mysqli_real_escape_string($conn, $_POST['activity']);
     $adult_price = floatval($_POST['adult_price']);
     $child_price = floatval($_POST['child_price']);
-    $activities = $_POST['activities'] ?? [];
+
+    // Handle optional image upload
+    $photoFile = $_FILES['photo'];
+    $newPhotoName = $package['photo']; // keep existing by default
+
+    if ($photoFile['error'] === 0 && $photoFile['size'] > 0) {
+        $check = getimagesize($photoFile['tmp_name']); // Step 1: Validate it's an image
+        $allowedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // Step 2: Allowed extensions
+
+        if ($check !== false) {
+            $originalName = pathinfo($photoFile['name'], PATHINFO_FILENAME);
+            $ext = strtolower(pathinfo($photoFile['name'], PATHINFO_EXTENSION));
+
+            if (in_array($ext, $allowedTypes)) {
+                $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalName);
+                $newPhotoName = strtolower($safeName . '_' . $package_id . '.' . $ext);
+
+                // Delete old photo if exists
+                if (!empty($package['photo']) && file_exists('Assets/' . $package['photo'])) {
+                    unlink('Assets/' . $package['photo']);
+                }
+
+                move_uploaded_file($photoFile['tmp_name'], 'Assets/' . $newPhotoName);
+            } else {
+                $error = "Invalid image type. Only JPG, PNG, GIF, and WEBP are allowed.";
+            }
+        } else {
+            $error = "Uploaded file is not a valid image.";
+        }
+    }
+
 
     mysqli_begin_transaction($conn);
     try {
-        // Update package
-        mysqli_query($conn, "UPDATE packages SET description='$description', duration='$duration' WHERE package_id=$package_id");
+        // Update package details
+        mysqli_query($conn, "UPDATE packages 
+                             SET description='$description', duration='$duration', activity='$activities', photo='$newPhotoName' 
+                             WHERE package_id=$package_id");
 
         // Update or insert price
-        $existing = mysqli_query($conn, "SELECT price_id FROM package_prices WHERE package_id=$package_id");
-        if (mysqli_num_rows($existing) > 0) {
-            mysqli_query($conn, "UPDATE package_prices SET adult_price=$adult_price, child_price=$child_price WHERE package_id=$package_id");
+        $check_price = mysqli_query($conn, "SELECT price_id FROM package_prices WHERE package_id = $package_id");
+        if (mysqli_num_rows($check_price) > 0) {
+            mysqli_query($conn, "UPDATE package_prices 
+                                 SET adult_price=$adult_price, child_price=$child_price 
+                                 WHERE package_id=$package_id");
         } else {
-            mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price) VALUES ($package_id, $adult_price, $child_price)");
-        }
-
-        // Update activities
-        mysqli_query($conn, "DELETE FROM package_activities WHERE package_id=$package_id");
-        foreach ($activities as $activity_id) {
-            $act_id = intval($activity_id);
-            mysqli_query($conn, "INSERT INTO package_activities (package_id, activity_id) VALUES ($package_id, $act_id)");
+            mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price) 
+                                 VALUES ($package_id, $adult_price, $child_price)");
         }
 
         mysqli_commit($conn);
@@ -77,87 +87,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Edit Package</title>
-    <style>
-        body { font-family: Poppins, sans-serif; padding: 2rem; background: #f5f5f5; }
-        form { background: #fff; padding: 2rem; max-width: 700px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
-        h2 { text-align: center; margin-bottom: 1.5rem; }
-        label { display: block; margin-top: 1rem; font-weight: 600; }
-        input[type=text], input[type=number], select {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-top: 5px;
-        }
-        .activity-row { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
-        .activity-row select { flex: 1; }
-        button { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 6px; margin-top: 1.5rem; cursor: pointer; }
-        button:hover { background: #219150; }
-        .add-btn { background: #2980b9; margin-top: 1rem; }
-        .msg { text-align: center; font-weight: bold; margin-top: 1rem; }
-        .msg.success { color: green; }
-        .msg.error { color: red; }
-        .back-link { display: block; text-align: center; margin-top: 1.5rem; color: #2980b9; text-decoration: none; font-weight: 600; }
-        .back-link:hover { text-decoration: underline; }
-    </style>
-    <script>
-        function addActivityRow() {
-            const container = document.getElementById('activity-container');
-            const row = document.createElement('div');
-            row.className = 'activity-row';
-            row.innerHTML = `
-                <select name="activities[]">
-                    <?= implode('', array_map(function($a) {
-                        return "<option value='{$a['activity_id']}'>" . htmlspecialchars($a['activity_name']) . "</option>";
-                    }, $activity_options)); ?>
-                </select>
-                <button type="button" onclick="this.parentElement.remove()" style="background:#e74c3c;color:white;">Remove</button>
-            `;
-            container.appendChild(row);
-        }
-    </script>
+  <meta charset="UTF-8">
+  <title>Edit Package</title>
+  <style>
+    body { font-family: Poppins, sans-serif; padding: 2rem; background: #f5f5f5; }
+    form { background: #fff; padding: 2rem; max-width: 600px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    input[type=text], input[type=number], textarea, input[type=file] {
+        width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-top: 5px;
+    }
+    textarea { resize: vertical; height: 80px; }
+    .img-preview { margin-top: 10px; max-width: 200px; display: block; border-radius: 6px; }
+    button {
+        background: #27ae60; color: white; padding: 10px 20px;
+        border: none; border-radius: 6px; margin-top: 1.5rem; cursor: pointer;
+    }
+    button:hover { background: #219150; }
+    .msg { text-align: center; font-weight: bold; margin-top: 1rem; }
+    .msg.success { color: green; }
+    .msg.error { color: red; }
+    .back-link {
+        display: block; text-align: center; margin-top: 1.5rem;
+        color: #2980b9; text-decoration: none; font-weight: 600;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
 
 <h2>Edit Package: <?= htmlspecialchars($package['package_name']) ?></h2>
+
 <?php if ($error): ?><div class="msg error"><?= $error ?></div><?php endif; ?>
 <?php if ($success): ?><div class="msg success"><?= $success ?></div><?php endif; ?>
 
-<form method="POST">
-    <label>Description</label>
-    <input type="text" name="description" value="<?= htmlspecialchars($package['description'] ?? '') ?>" required>
+<form method="POST" enctype="multipart/form-data">
+  <label>Description</label>
+  <input type="text" name="description" value="<?= htmlspecialchars($package['description']) ?>" required>
 
-    <label>Duration</label>
-    <input type="text" name="duration" value="<?= htmlspecialchars($package['duration'] ?? '') ?>" required>
+  <label>Duration</label>
+  <input type="text" name="duration" value="<?= htmlspecialchars($package['duration']) ?>" required>
 
-    <label>Adult Price (RM)</label>
-    <input type="number" name="adult_price" step="0.01" value="<?= $price['adult_price'] ?? 0 ?>" required>
+  <label>Activities <small>(comma separated)</small></label>
+  <textarea name="activity" required><?= htmlspecialchars($package['activity']) ?></textarea>
 
-    <label>Child Price (RM)</label>
-    <input type="number" name="child_price" step="0.01" value="<?= $price['child_price'] ?? 0 ?>" required>
+  <label>Adult Price (RM)</label>
+  <input type="number" name="adult_price" step="0.01" value="<?= htmlspecialchars($price['adult_price'] ?? '0.00') ?>" required>
 
-    <label>Activities</label>
-    <div id="activity-container">
-        <?php foreach ($current_activities as $act): ?>
-            <div class="activity-row">
-                <select name="activities[]">
-                    <?php foreach ($activity_options as $opt): ?>
-                        <option value="<?= $opt['activity_id'] ?>" <?= $opt['activity_id'] == $act['activity_id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($opt['activity_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <button type="button" onclick="this.parentElement.remove()" style="background:#e74c3c;color:white;">Remove</button>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    <button type="button" class="add-btn" onclick="addActivityRow()">+ Add Activity</button>
+  <label>Child Price (RM)</label>
+  <input type="number" name="child_price" step="0.01" value="<?= htmlspecialchars($price['child_price'] ?? '0.00') ?>" required>
 
-    <br>
-    <button type="submit" name="update">Update Package</button>
+  <label>Current Photo</label>
+  <?php if (!empty($package['photo']) && file_exists('Assets/' . $package['photo'])): ?>
+    <img src="Assets/<?= $package['photo'] ?>" class="img-preview" alt="Package Photo">
+  <?php else: ?>
+    <p style="color: #888;">No image attached</p>
+  <?php endif; ?>
+
+  <label>Upload New Photo (optional)</label>
+  <input type="file" name="photo" accept="image/*">
+
+  <button type="submit" name="update">Update Package</button>
 </form>
+
 <a href="manage_campsites.php" class="back-link">← Back to Package Management</a>
 
 </body>

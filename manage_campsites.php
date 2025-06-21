@@ -1,18 +1,17 @@
 <?php
-  session_start();                    // Start session after enabling error reporting
-  include 'db_connection.php';
-  include 'session_check.php';        // Load session check functions
-  checkAdminSession(); 
+session_start();
+include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manage Campsites - TasikBiruCamps</title>
+  <title>Manage Packages - TasikBiruCamps</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
   <style>
     * {
       box-sizing: border-box;
@@ -72,7 +71,7 @@
 
     .content {
       margin-left: 250px;
-      padding: 2rem 1rem;  
+      padding: 2.5rem 3rem;
       width: calc(100% - 250px);
     }
 
@@ -82,63 +81,6 @@
       margin-bottom: 2rem;
       color: #34495e;
       text-align: center;
-    }
-
-    .dashboard-cards 
-    {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .table-container 
-    {
-      background: #fff;
-      padding: 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      margin-top: 2rem;
-      overflow-x: auto; /* Adds scroll on small screens */
-      }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 15px;
-      min-width: 600px; /* Prevents table from shrinking too small */
-    }
-
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    th {
-      background-color: #f8f9fa;
-      color: #2c3e50;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-    }
-
-    tr:hover {
-      background-color: #f1f1f1;
-      transition: background 0.2s ease-in-out;
-    }
-
-
-    .action-buttons a {
-      margin-right: 10px;
-      color: #2980b9;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .action-buttons a:hover {
-      text-decoration: underline;
     }
 
     .add-button {
@@ -155,26 +97,79 @@
     .add-button:hover {
       background-color: #219150;
     }
+
+    .table-container {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow-x: auto;
+      margin-top: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #f8f9fa;
+      color: #2c3e50;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+      transition: background 0.2s ease-in-out;
+    }
+
+    .action-buttons a {
+      margin-right: 10px;
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .action-buttons a:hover {
+      text-decoration: underline;
+    }
+
+    .package-img {
+      width: 100px;
+      height: auto;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>Admin</h2>
-    <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
-    <a href="manage_bookings.php" ><i class="fas fa-calendar-check"></i> Manage Bookings</a>
-    <a href="manage_campsites.php" class="active"><i class="fas fa-campground"></i> Manage Packages</a>
-    <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
-    <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
-    <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
-    <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
-      <i class="fas fa-sign-out-alt"></i> Logout
-    </a>
-  </div>
+  <h2>Admin</h2>
+  <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
+  <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
+  <a href="manage_campsites.php" class="active"><i class="fas fa-campground"></i> Manage Packages</a>
+  <a href="manage_staff.php"><i class="fas fa-users"></i> Manage Staff</a>
+  <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
+  <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
+  <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </a>
+</div>
 
 <div class="content">
   <h1>Manage Packages</h1>
-
   <a class="add-button" href="add_campsite.php">+ Add New Package</a>
 
   <div class="table-container">
@@ -182,6 +177,7 @@
       <thead>
         <tr>
           <th>Bil</th>
+          <th>Image</th>
           <th>Package Name</th>
           <th>Description</th>
           <th>Duration</th>
@@ -192,67 +188,54 @@
       </thead>
       <tbody>
       <?php
-      $package_result = mysqli_query($conn, "
-          SELECT 
-              p.package_id,
-              p.package_name,
-              p.description,
-              p.duration,
-              GROUP_CONCAT(a.activity_name SEPARATOR ', ') AS activities,
-              pp.adult_price,
-              pp.child_price
-          FROM packages p
-          LEFT JOIN package_activities pa ON p.package_id = pa.package_id
-          LEFT JOIN activities a ON pa.activity_id = a.activity_id
-          LEFT JOIN package_prices pp ON p.package_id = pp.package_id
-          GROUP BY p.package_id
-          ORDER BY p.package_id ASC
-      ");
+      $query = "SELECT 
+        p.package_id,
+        p.package_name,
+        p.description,
+        p.duration,
+        p.activity,
+        p.photo,
+        pp.adult_price,
+        pp.child_price
+      FROM packages p
+      LEFT JOIN package_prices pp ON p.package_id = pp.package_id
+      ORDER BY p.package_id ASC";
+      $result = mysqli_query($conn, $query);
+      $num = 1;
 
-      $count = 1;
-      while ($package = mysqli_fetch_assoc($package_result)) {
-          $price = "Adult: RM " . number_format($package['adult_price'] ?? 0, 2) . "<br>Child: RM " . number_format($package['child_price'] ?? 0, 2);
-          
-          echo "<tr>
-              <td>{$count}</td>
-              <td>" . htmlspecialchars($package['package_name']) . "</td>
-              <td>" . htmlspecialchars($package['description']) . "</td>
-              <td>" . htmlspecialchars($package['duration']) . "</td>
-              <td>" . htmlspecialchars($package['activities'] ?? '-') . "</td>
-              <td>{$price}</td>
-              <td class='action-buttons'>
-                  <a href='edit_campsite.php?id={$package['package_id']}'>Edit</a>
-                  <a href='#' onclick='confirmCampsiteDelete({$package['package_id']})'>Delete</a>
-              </td>
-          </tr>";
-          $count++;
+      while ($row = mysqli_fetch_assoc($result)) {
+        $adult_price = isset($row['adult_price']) ? number_format($row['adult_price'], 2) : '0.00';
+        $child_price = isset($row['child_price']) ? number_format($row['child_price'], 2) : '0.00';
+        $price = "Adult: RM {$adult_price}<br>Child: RM {$child_price}";
+
+        $activities = isset($row['activity']) ? htmlspecialchars($row['activity']) : '-';
+
+        echo "<tr>
+            <td>{$num}</td>
+            <td>";
+        if (!empty($row['photo']) && file_exists('Assets/' . $row['photo'])) {
+            echo "<img src='Assets/" . htmlspecialchars($row['photo']) . "' alt='Package Image' class='package-img'>";
+        } else {
+            echo "No image attached";
+        }
+        echo "</td>
+            <td>" . htmlspecialchars($row['package_name']) . "</td>
+            <td>" . htmlspecialchars($row['description']) . "</td>
+            <td>" . htmlspecialchars($row['duration']) . "</td>
+            <td>{$activities}</td>
+            <td>{$price}</td>
+            <td class='action-buttons'>
+                <a href='edit_campsite.php?id={$row['package_id']}'>Edit</a>
+                <a href='delete_campsite.php?id={$row['package_id']}' onclick='return confirm(\"Are you sure you want to delete this package?\")'>Delete</a>
+            </td>
+        </tr>";
+        $num++;
       }
       ?>
-
       </tbody>
     </table>
   </div>
 </div>
-
-<script>
-function confirmCampsiteDelete(campId) {
-    if (confirm('Are you sure you want to delete this campsite? This will also remove all associated packages and activities.')) {
-        // Create and submit form
-        var form = document.createElement('form');
-        form.setAttribute('method', 'POST');
-        form.setAttribute('action', 'delete_campsite.php');
-        
-        var input = document.createElement('input');
-        input.setAttribute('type', 'hidden');
-        input.setAttribute('name', 'id');
-        input.setAttribute('value', campId);
-        
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-</script>
 
 </body>
 </html>
