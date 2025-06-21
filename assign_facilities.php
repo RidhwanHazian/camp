@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $facility_id = intval($_POST['facility_id']);
 
     if (!empty($staff_id) && !empty($facility_id)) {
-        // Check if already assigned
         $check_sql = "SELECT * FROM staff_facilities WHERE staff_id = ? AND facility_id = ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("ii", $staff_id, $facility_id);
@@ -29,6 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $_SESSION['error'] = "Please fill in all required fields.";
     }
+
+    // ✅ Set a flag that form was submitted
+    $_SESSION['form_submitted'] = true;
 
     header("Location: assign_facilities.php");
     exit();
@@ -132,11 +134,15 @@ while ($row = $facilities_result->fetch_assoc()) {
   <div class="container">
     <h1>Assign Facilities</h1>
 
-    <?php if (isset($_SESSION['error'])): ?>
-      <div class="msg"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
-    <?php elseif (isset($_SESSION['success'])): ?>
-      <div class="msg success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
+    <?php if (isset($_SESSION['form_submitted'])): ?>
+      <?php if (isset($_SESSION['error'])): ?>
+        <div class="msg"><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+      <?php elseif (isset($_SESSION['success'])): ?>
+        <div class="msg success"><?= $_SESSION['success']; unset($_SESSION['success']); ?></div>
+      <?php endif; ?>
+      <?php unset($_SESSION['form_submitted']); ?>
     <?php endif; ?>
+
 
     <form method="post">
       <label for="staff_id">Select Staff:</label>

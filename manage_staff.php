@@ -339,8 +339,8 @@ $schedule_result = $conn->query($schedule_query);
                     <td>" . htmlspecialchars($row['staff_name']) . "</td>
                     <td>" . htmlspecialchars($row['facility_name']) . "</td>
                     <td class='action-buttons'>
-                      <a href='edit_assignment.php?staff_id=" . $row['staff_id'] . "&facility_name=" . urlencode($row['facility_name']) . "'>Edit</a>
-                      <a href='delete_assignment.php?staff_id=" . $row['staff_id'] . "&facility_name=" . urlencode($row['facility_name']) . "' onclick='return confirm(\"Are you sure you want to delete this assignment?\");'>Delete</a>
+                      <a href='edit_assign_facilities.php?staff_id=" . $row['staff_id'] . "&facility_name=" . urlencode($row['facility_name']) . "'>Edit</a>
+                      <a href='delete_assign_facilities.php?staff_id=" . $row['staff_id'] . "&facility_name=" . urlencode($row['facility_name']) . "' onclick='return confirm(\"Are you sure you want to delete this assignment?\");'>Delete</a>
                     </td>
                   </tr>";
           }
