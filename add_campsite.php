@@ -14,13 +14,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $adult_price = floatval($_POST['adult_price']);
         $child_price = floatval($_POST['child_price']);
 
-        // Insert package
-        $sql = "INSERT INTO packages (package_name, description, duration) VALUES ('$package_name', '$description', '$duration')";
+        // Handle photo upload
+        $photo_name = '';
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === 0) {
+            $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
+            $allowed_exts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (in_array($ext, $allowed_exts)) {
+                $safe_name = preg_replace('/[^a-zA-Z0-9]/', '_', strtolower($package_name));
+                $photo_name = "package_{$safe_name}." . $ext;
+                move_uploaded_file($_FILES['photo']['tmp_name'], 'Assets/' . $photo_name);
+            } else {
+                throw new Exception("Invalid file type. Only JPG, JPEG, PNG, GIF, WEBP allowed.");
+            }
+        }
+
+        // Insert into packages
+        $sql = "INSERT INTO packages (package_name, description, duration, photo) 
+                VALUES ('$package_name', '$description', '$duration', '$photo_name')";
         mysqli_query($conn, $sql);
         $package_id = mysqli_insert_id($conn);
 
         // Insert prices
-        mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price) VALUES ($package_id, $adult_price, $child_price)");
+        mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price) 
+                             VALUES ($package_id, $adult_price, $child_price)");
 
         // Insert activities
         if (!empty($_POST['activities'])) {
@@ -33,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mysqli_query($conn, "INSERT INTO activities (activity_name) VALUES ('$act_name')");
                     $activity_id = mysqli_insert_id($conn);
                 }
-                mysqli_query($conn, "INSERT INTO package_activities (package_id, activity_id) VALUES ($package_id, $activity_id)");
+                mysqli_query($conn, "INSERT INTO package_activities (package_id, activity_id) 
+                                     VALUES ($package_id, $activity_id)");
             }
         }
 
@@ -46,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <label for="child_price">Child Price (RM)</label>
   <input type="number" name="child_price" step="0.01" required>
+  
+  <label for="photo">Upload Photo</label>
+  <input type="file" name="photo" accept="image/*">
 
   <label>Activities</label>
   <div id="activities">
@@ -111,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button type="button" onclick="this.parentElement.remove()">Remove</button>
     </div>
   </div>
+
   <button type="button" class="add-activity" onclick="addActivity()">+ Add Activity</button>
 
   <input type="submit" name="submit" value="Add Package">
