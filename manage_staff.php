@@ -174,20 +174,23 @@ $schedule_result = $conn->query($schedule_query);
       text-decoration: underline;
     }
 
-    .section-buttons button {
-      padding: 10px 20px;
-      margin: 0 10px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+    html {
+      scroll-behavior: smooth;
     }
 
-    .section-buttons button:hover {
-      background-color: #2980b9;
+    .sidebar .section-label {
+      padding-left: 10px;
+      font-size: 0.75rem;
+      color: #95a5a6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .sidebar .sub-link {
+      font-size: 0.85rem;
+      padding-left: 30px;
     }
   </style>
 </head>
@@ -199,6 +202,14 @@ $schedule_result = $conn->query($schedule_query);
   <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
   <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Packages</a>
   <a href="manage_staff.php" class="active"><i class="fas fa-users"></i> Manage Staff</a>
+
+  <div style="margin: 0.1rem 0; border-top: 1px solid #7f8c8d;"></div>
+  <div class="section-label">Manage staff sidebar</div>
+  <a href="#staff-section" class="sub-link"><i class="fas fa-user"></i> Staff List</a>
+  <a href="#schedule-section" class="sub-link"><i class="fas fa-clock"></i> Staff Schedule</a>
+  <a href="#facility-section" class="sub-link"><i class="fas fa-building"></i> Facilities</a>
+
+  <div style="margin: 0.1rem 0; border-top: 1px solid #7f8c8d;"></div>
   <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
   <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
   <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
@@ -208,11 +219,6 @@ $schedule_result = $conn->query($schedule_query);
 
 <div class="content">
   <h1>Manage Staff</h1>
-  <div class="section-buttons" style="text-align: center; margin-bottom: 2rem;">
-    <button onclick="scrollToSection('staff-section')">Staff List</button>
-    <button onclick="scrollToSection('schedule-section')">Staff Schedule</button>
-    <button onclick="scrollToSection('facility-section')">Assigned Facilities</button>
-  </div>
 
   <!-- Staff Section -->
   <div id="staff-section" class="section-header">
@@ -352,15 +358,6 @@ $schedule_result = $conn->query($schedule_query);
     </table>
   </div>
 </div>
-
-<script>
-  function scrollToSection(id) {
-    const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-</script>
 
 </body>
 </html>
