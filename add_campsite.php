@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $adult_price = floatval($_POST['adult_price']);
         $child_price = floatval($_POST['child_price']);
 
-        // Handle photo upload
+        // Handle photo upload (stored in Assets/)
         $photo_name = '';
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] === 0) {
             $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
@@ -28,31 +28,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Collect all activities into a single comma-separated string
+        $activities = '';
+        if (!empty($_POST['activities'])) {
+            $trimmed_activities = array_map('trim', $_POST['activities']);
+            $escaped_activities = array_map(fn($a) => mysqli_real_escape_string($conn, $a), $trimmed_activities);
+            $activities = implode(', ', $escaped_activities);
+        }
+
         // Insert into packages
-        $sql = "INSERT INTO packages (package_name, description, duration, photo) 
-                VALUES ('$package_name', '$description', '$duration', '$photo_name')";
+        $sql = "INSERT INTO packages (package_name, description, duration, photo, activity)
+                VALUES ('$package_name', '$description', '$duration', '$photo_name', '$activities')";
         mysqli_query($conn, $sql);
         $package_id = mysqli_insert_id($conn);
 
         // Insert prices
-        mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price) 
+        mysqli_query($conn, "INSERT INTO package_prices (package_id, adult_price, child_price)
                              VALUES ($package_id, $adult_price, $child_price)");
-
-        // Insert activities
-        if (!empty($_POST['activities'])) {
-            foreach ($_POST['activities'] as $act_name) {
-                $act_name = mysqli_real_escape_string($conn, $act_name);
-                $act_check = mysqli_query($conn, "SELECT activity_id FROM activities WHERE activity_name='$act_name'");
-                if ($row = mysqli_fetch_assoc($act_check)) {
-                    $activity_id = $row['activity_id'];
-                } else {
-                    mysqli_query($conn, "INSERT INTO activities (activity_name) VALUES ('$act_name')");
-                    $activity_id = mysqli_insert_id($conn);
-                }
-                mysqli_query($conn, "INSERT INTO package_activities (package_id, activity_id) 
-                                     VALUES ($package_id, $activity_id)");
-            }
-        }
 
         mysqli_commit($conn);
         header("Location: manage_campsites.php");
@@ -106,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <h2>Add New Package</h2>
 <?php if ($error): ?><div class="error"><?= $error ?></div><?php endif; ?>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
   <label for="package_name">Package Name</label>
   <input type="text" name="package_name" required>
 
