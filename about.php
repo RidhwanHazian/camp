@@ -1,3 +1,19 @@
+<?php
+include 'db_connection.php';
+$reviews = [];
+$sql = "SELECT f.*, u.username, p.package_name FROM feedback f JOIN users u ON f.user_id = u.user_id JOIN packages p ON f.package_id = p.package_id ORDER BY f.feedback_id DESC LIMIT 6";
+$result = $conn->query($sql);
+while ($row = $result->fetch_assoc()) {
+    $reviews[] = $row;
+}
+$review_count = 0;
+$average_rating = 0;
+$count_result = $conn->query("SELECT COUNT(*) as total, AVG(rating) as avg_rating FROM feedback");
+if ($count_row = $count_result->fetch_assoc()) {
+    $review_count = $count_row['total'];
+    $average_rating = $count_row['avg_rating'] ? round($count_row['avg_rating'], 1) : 0;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,17 +22,40 @@
     <title>About Us - TasikBiruCamps</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * {
             box-sizing: border-box;
         }
         body {
-            background: url('backgroundcamp.jpg') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
             margin: 0;
             font-family: 'Poppins', 'Montserrat', Arial, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            color: #fff;
             overflow-x: hidden;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('homepageBackground.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            z-index: -2;
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
         }
         .hero-navbar-bg {
             background: rgba(20, 20, 20, 0.85);
@@ -69,10 +108,14 @@
             background: #218838;
             transform: translateY(-2px) scale(1.04);
         }
+        .about-section, .main-bg, .hero, .features-row, .team-section {
+            position: relative;
+            z-index: 1;
+        }
         .about-section {
-            background: transparent !important;
-            box-shadow: none;
+            background: rgba(20, 20, 20, 0.85) !important;
             color: #fff;
+            box-shadow: none;
             text-align: center;
             padding: 80px 20px 40px 20px;
             max-width: 900px;
@@ -106,17 +149,21 @@
             border-radius: 18px;
         }
         .about-content {
-            flex: 2 1 400px;
+            background: rgba(20, 20, 20, 0.85);
+            color: #fff;
+            border-radius: 18px;
+            padding: 24px;
+        }
+        .about-content h2, .about-content p {
+            color: #fff;
         }
         .about-content h2 {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 18px;
-            color: #222;
         }
         .about-content p {
             font-size: 1.1rem;
-            color: #444;
             margin-bottom: 18px;
             line-height: 1.7;
         }
@@ -128,7 +175,9 @@
             flex-wrap: wrap;
         }
         .feature-card {
-            background: #fff;
+            background: rgba(30, 30, 30, 0.95);
+            color: #fff;
+            border-color: rgba(40,167,69,0.13);
             border-radius: 22px;
             box-shadow: 0 8px 32px rgba(40,167,69,0.10), 0 1.5px 8px rgba(80,80,160,0.08);
             padding: 36px 32px 28px 32px;
@@ -138,7 +187,6 @@
             text-align: center;
             transition: transform 0.22s cubic-bezier(.4,2,.6,1), box-shadow 0.22s, background 0.22s;
             margin-bottom: 18px;
-            border: 2.5px solid rgba(40,167,69,0.13);
             position: relative;
             overflow: hidden;
         }
@@ -148,7 +196,7 @@
         .feature-card:hover {
             transform: translateY(-10px) scale(1.045);
             box-shadow: 0 16px 48px rgba(40,167,69,0.18), 0 2px 12px rgba(80,80,160,0.10);
-            background: #f8fafc;
+            background: #222;
             border-color: #28a745;
         }
         .feature-card i {
@@ -164,14 +212,14 @@
         }
         .feature-card h3 {
             font-size: 1.25rem;
-            color: #28a745;
+            color: #fff;
             margin-bottom: 14px;
             font-weight: 700;
             z-index: 1;
             position: relative;
         }
         .feature-card p {
-            color: #333;
+            color: #fff;
             font-size: 1.08rem;
             z-index: 1;
             position: relative;
@@ -181,12 +229,16 @@
             .feature-card { max-width: 95vw; }
         }
         .team-section {
+            background: rgba(20, 20, 20, 0.85);
+            color: #fff;
+            border-radius: 18px;
+            padding: 24px;
             max-width: 1100px;
             margin: 60px auto 0 auto;
             text-align: center;
         }
         .team-section h2 {
-            color: #6f74c6;
+            color: #fff;
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 30px;
@@ -198,7 +250,7 @@
             flex-wrap: wrap;
         }
         .team-card {
-            background: #fff;
+            background: rgba(30,30,30,0.95) !important;
             border-radius: 16px;
             box-shadow: 0 4px 16px rgba(80,80,160,0.10);
             padding: 28px 22px;
@@ -234,12 +286,14 @@
         .team-card h4 {
             margin: 0 0 6px 0;
             font-size: 1.1rem;
-            color: #222;
+            color: #fff !important;
             font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
         .team-card p {
-            color: #666;
+            color: #fff !important;
             font-size: 0.98rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
         @media (max-width: 900px) {
             .about-section, .features-row, .team-row { flex-direction: column; align-items: center; }
@@ -353,7 +407,7 @@
             margin: 60px 0 0 0;
             border-radius: 0 0 32px 32px;
             box-shadow: 0 8px 32px rgba(80,80,160,0.10);
-            background: #fff;
+            background: rgba(20,20,20,0.85) !important;
             display: flex;
             gap: 48px;
             align-items: stretch;
@@ -393,16 +447,17 @@
             justify-content: center;
         }
         .our-story-content h2 {
-            color: #2e8b57;
+            color: #fff !important;
             font-size: 2.2rem;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 18px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
         .our-story-content p {
-            color: #333;
+            color: #fff !important;
             font-size: 1.15rem;
-            margin-bottom: 18px;
-            line-height: 1.7;
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
         @keyframes fadeInLeft {
             from { opacity: 0; transform: translateX(-40px); }
@@ -452,6 +507,383 @@
             text-decoration: none;
             font-weight: 500;
         }
+        body, h1, h2, h3, p, a {
+            color: #fff !important;
+        }
+        .hero p, .about-content p, .our-story-content p, .team-card h4, .team-card p {
+            color: #e0e7ff !important;
+        }
+        .our-story-content h2 {
+            color: #fff !important;
+            font-weight: 800;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .our-story-content p {
+            color: #fff !important;
+            font-size: 1.15rem;
+            font-weight: 500;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .team-card {
+            background: rgba(30,30,30,0.95) !important;
+        }
+        .team-card h4 {
+            font-weight: 700;
+        }
+        .team-section h2,
+        .our-story-content h2 {
+            color: #fff !important;
+            font-weight: 800;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .reviews-section {
+            max-width: 1200px;
+            margin: 60px auto 0 auto;
+        }
+        .reviews-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #222;
+        }
+        .reviews-row {
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .review-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(80,80,160,0.10);
+            padding: 24px 20px 16px 20px;
+            min-width: 280px;
+            max-width: 340px;
+            flex: 1 1 280px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        .review-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .review-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #6f74c6;
+        }
+        .review-username {
+            font-weight: 700;
+            color: #222;
+            font-size: 1.05rem;
+        }
+        .review-package {
+            font-size: 0.95rem;
+            color: #888;
+        }
+        .review-rating {
+            margin: 6px 0 8px 0;
+        }
+        .star {
+            color: #FFD600;
+            font-size: 1.1rem;
+        }
+        .star.gray {
+            color: #ccc;
+        }
+        .review-comment {
+            color: #222;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .review-image {
+            width: 100%;
+            border-radius: 12px;
+            object-fit: cover;
+            margin-top: 10px;
+        }
+        .media-thumb {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .media-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0; top: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .media-modal-content {
+            background: none;
+            border-radius: 12px;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .media-modal-content img,
+        .media-modal-content video {
+            max-width: 90vw;
+            max-height: 80vh;
+            border-radius: 12px;
+            background: #000;
+        }
+        .media-modal-close {
+            position: absolute;
+            top: 24px;
+            right: 40px;
+            color: #fff;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10001;
+        }
+        .review-video {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 10px;
+            background: #000;
+        }
+        .location-section {
+            max-width: 900px;
+            margin: 40px auto 0 auto;
+            text-align: center;
+        }
+        .location-section h2 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+        .location-section p {
+            color: #e0e7ff;
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+        }
+        .location-section iframe {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(80,80,160,0.13);
+        }
+        .custom-review-summary {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .custom-review-summary span {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #222;
+        }
+        .custom-review-summary span:last-child {
+            cursor: pointer;
+        }
+        .custom-gmap-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(80,80,160,0.13);
+            padding: 22px 28px 18px 28px;
+            max-width: 370px;
+            margin: 0 auto 24px auto;
+            text-align: left;
+            font-family: 'Poppins', 'Montserrat', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .gmap-card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .gmap-card-address {
+            color: #555;
+            font-size: 1.02rem;
+            margin-bottom: 14px;
+        }
+        .gmap-card-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 2px;
+        }
+        .gmap-card-rating {
+            color: #222;
+            font-size: 1.08rem;
+            font-weight: 600;
+        }
+        .gmap-card-stars .star {
+            color: #FFD600;
+            font-size: 1.15rem;
+        }
+        .gmap-card-stars .gray {
+            color: #ccc;
+        }
+        .gmap-card-reviews {
+            color: #1a73e8;
+            font-size: 1.08rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+        .gmap-card-reviews:hover {
+            text-decoration: underline;
+        }
+        .location-info-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(80,80,160,0.13);
+            padding: 28px 32px 18px 32px;
+            max-width: 370px;
+            margin: 0 auto 24px auto;
+            text-align: left;
+            font-family: 'Poppins', 'Montserrat', Arial, sans-serif;
+        }
+        .location-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .location-address {
+            color: #888;
+            font-size: 1.08rem;
+            margin-bottom: 18px;
+        }
+        .location-rating-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .location-rating-value {
+            color: #222;
+            font-size: 1.18rem;
+            font-weight: 700;
+        }
+        .location-rating-stars .star {
+            color: #FFD600;
+            font-size: 1.18rem;
+            vertical-align: middle;
+        }
+        .location-rating-stars .gray {
+            color: #ccc;
+        }
+        .location-review-link {
+            color: #1a73e8;
+            font-size: 1.08rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .location-review-link:hover {
+            text-decoration: underline;
+            color: #1558b0;
+        }
+        .location-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.89);
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(80,80,160,0.13);
+            padding: 22px 36px;
+            max-width: 900px;
+            margin: 0 auto 24px auto;
+            font-family: 'Poppins', 'Montserrat', Arial, sans-serif;
+        }
+        .location-banner-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #222;
+            margin-right: 12px;
+        }
+        .location-banner-address {
+            color: #888;
+            font-size: 1.08rem;
+        }
+        .location-banner-rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .location-banner-value {
+            color: #222;
+            font-size: 1.18rem;
+            font-weight: 700;
+        }
+        .location-banner-stars .star {
+            color: #FFD600;
+            font-size: 1.18rem;
+            vertical-align: middle;
+        }
+        .location-banner-stars .gray {
+            color: #ccc;
+        }
+        .location-banner-review {
+            background: #28a745;
+            color: #fff;
+            font-size: 1.08rem;
+            font-weight: 700;
+            text-decoration: none;
+            margin-left: 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 16px;
+            padding: 8px 32px;
+            box-shadow: none;
+            transition: background 0.2s, color 0.2s, text-decoration 0.2s;
+            display: inline-block;
+        }
+        .location-banner-review:hover {
+            text-decoration: underline;
+            background: #28a745;
+            color: #fff;
+        }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out {
+            font-size: 1.3rem !important;
+            font-weight: normal;
+            background: #fff !important;
+            color: #222 !important;
+            border: 1px solidrgba(224, 224, 224, 0.71) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 1px 4px rgba(80,80,160,0.08);
+            width: 32px !important;
+            height: 32px !important;
+            line-height: 28px !important;
+            margin-bottom: 4px;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+        }
+        .leaflet-control-zoom-in:hover, .leaflet-control-zoom-out:hover {
+            background:rgba(255, 227, 227, 0.46) !important;
+            color: #1a73e8 !important;
+            border: 1px solid #b3d1ff !important;
+        }
     </style>
 </head>
 <body>
@@ -472,7 +904,7 @@
     </div>
     <div class="our-story-section" id="about-section">
         <div class="our-story-img-card">
-            <img src="backgroundcamp.jpg" alt="TasikBiruCamps Nature" />
+            <img src="ourStoryBackground.jpg" alt="TasikBiruCamps Nature" />
         </div>
         <div class="our-story-content">
             <h2>Our Story</h2>
@@ -480,47 +912,136 @@
             <p>Today, TasikBiruCamps partners with beautiful campsites, offers a variety of adventure packages, and brings together a vibrant community of campers, families, and explorers. Our mission is to inspire more people to experience the magic of nature, build friendships, and create memories that last a lifetime.</p>
         </div>
     </div>
-    <div class="features-row">
-                <div class="feature-card">
-            <i class="fas fa-campground"></i>
-            <h3>Beautiful Campsites</h3>
-            <p>Enjoy scenic views, clean facilities, and a variety of camping options for all ages and groups.</p>
+    <div class="location-section" style="max-width:900px;margin:40px auto 0 auto;text-align:center;">
+        <h2 style="color:#fff;font-size:2rem;font-weight:700;margin-bottom:18px;">Our Location</h2>
+        <div class="location-banner">
+            <div>
+                <span class="location-banner-title">Kem Tasik Biru</span>
+                <span class="location-banner-address">77000 Jasin, Malacca</span>
+            </div>
+            <div class="location-banner-rating">
+                <span class="location-banner-value"><?php echo $average_rating; ?></span>
+                <span class="location-banner-stars">
+                    <?php
+                    $fullStars = floor($average_rating);
+                    $halfStar = ($average_rating - $fullStars) >= 0.5;
+                    for ($i = 0; $i < $fullStars; $i++) echo '<span class="star">&#9733;</span>';
+                    if ($halfStar) echo '<span class="star">&#189;</span>';
+                    for ($i = $fullStars + $halfStar; $i < 5; $i++) echo '<span class="star gray">&#9733;</span>';
+                    ?>
+                </span>
+                <a href="#reviews-section" class="location-banner-review" onclick="document.getElementById('reviews-section').scrollIntoView({behavior:'smooth'});return false;">
+                    Review
+                </a>
+            </div>
+        </div>
+        <div id="customMap" style="width:100%;height:350px;border-radius:16px;box-shadow:0 4px 24px rgba(80,80,160,0.13);margin:0 auto;"></div>
+    </div>
+    <div class="reviews-section" id="reviews-section">
+        <h2 class="reviews-title">What Our Campers Say</h2>
+        <div class="reviews-row">
+            <?php foreach ($reviews as $review): ?>
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div>
+                        <div class="review-username"><?php echo htmlspecialchars($review['username']); ?></div>
+                        <div class="review-package"><?php echo htmlspecialchars($review['package_name']); ?></div>
+                    </div>
                 </div>
-                <div class="feature-card">
-            <i class="fas fa-hiking"></i>
-            <h3>Adventure Activities</h3>
-            <p>From hiking and kayaking to team-building games, we offer activities for every adventurer.</p>
+                <div class="review-rating">
+                    <?php
+                    $maxStars = 5;
+                    for ($i = 0; $i < $review['rating']; $i++): ?>
+                        <span class="star">&#9733;</span>
+                    <?php endfor;
+                    for ($i = $review['rating']; $i < $maxStars; $i++): ?>
+                        <span class="star gray">&#9733;</span>
+                    <?php endfor; ?>
                 </div>
-                <div class="feature-card">
-            <i class="fas fa-users"></i>
-            <h3>Community & Events</h3>
-            <p>Meet fellow campers, join our events, and make memories that last a lifetime.</p>
+                <div class="review-comment">
+                    <?php echo htmlspecialchars($review['comment']); ?>
+                </div>
+                <?php if (!empty($review['photo_path'])): ?>
+                    <button class="media-thumb" onclick="openMediaModal('<?php echo htmlspecialchars($review['photo_path']); ?>', 'image')">
+                        <img src="<?php echo htmlspecialchars($review['photo_path']); ?>" alt="Review Photo" style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                    </button>
+                <?php endif; ?>
+                <?php if (!empty($review['video_path'])): ?>
+                    <video class="review-video" controls>
+                        <source src="<?php echo htmlspecialchars($review['video_path']); ?>" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
     <div class="team-section">
         <h2>Meet Our Team</h2>
         <div class="team-row">
             <div class="team-card">
-                <div class="team-avatar"><i class="fas fa-user-tie"></i></div>
-                <h4>Amirul</h4>
-                <p>Founder & Camp Director</p>
+                <div class="team-avatar"><img src="path/to/your_image1.jpg" alt="Team Member 1"></div>
+                <h4>Siti Nur Syahidah</h4>
+                <p>Founder and Camp Director</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><i class="fas fa-user-astronaut"></i></div>
-                <h4>Siti</h4>
+                <div class="team-avatar"><img src="path/to/your_image2.jpg" alt="Team Member 2"></div>
+                <h4>Siti Aisyah</h4>
                 <p>Adventure Coordinator</p>
-                </div>
-            <div class="team-card">
-                <div class="team-avatar"><i class="fas fa-user-nurse"></i></div>
-                <h4>Farhan</h4>
-                <p>Safety & Wellness Lead</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><i class="fas fa-user-friends"></i></div>
-                <h4>Nurul</h4>
+                <div class="team-avatar"><img src="lutfiah.jpg" alt="Team Member 3"></div>
+                <h4>Lutfiah Qistina</h4>
+                <p>Safety and Wellness Lead</p>
+            </div>
+            <div class="team-card">
+                <div class="team-avatar"><img src="path/to/your_image4.jpg" alt="Team Member 4"></div>
+                <h4>Muhammad Ridhwan</h4>
                 <p>Community Manager</p>
-        </div>
+            </div>
         </div>
     </div>
+    <div id="mediaModal" class="media-modal" onclick="closeMediaModal()">
+        <span class="media-modal-close" onclick="closeMediaModal()">&times;</span>
+        <div class="media-modal-content" id="mediaModalContent"></div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    function openMediaModal(src, type) {
+        var modal = document.getElementById('mediaModal');
+        var content = document.getElementById('mediaModalContent');
+        if (type === 'image') {
+            content.innerHTML = '<img src="' + src + '" alt="Review Photo">';
+        } else if (type === 'video') {
+            content.innerHTML = '<video src="' + src + '" controls autoplay></video>';
+        }
+        modal.style.display = 'flex';
+    }
+    function closeMediaModal() {
+        var modal = document.getElementById('mediaModal');
+        var content = document.getElementById('mediaModalContent');
+        modal.style.display = 'none';
+        content.innerHTML = '';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = document.getElementById('mediaModal');
+        modal.onclick = function(e) {
+            if (e.target === modal) closeMediaModal();
+        }
+    });
+    function initMap() {
+        var map = L.map('customMap').setView([2.312, 102.489], 15); // Replace with your coordinates
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([2.312, 102.489]).addTo(map)
+            .bindPopup('Kem Tasik Biru<br>77000 Jasin, Malacca')
+            .openPopup();
+    }
+    window.onload = initMap;
+    </script>
 </body>
 </html>
