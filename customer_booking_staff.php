@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
     try {
         $booking_id = $_POST['booking_id'];
         $payment_id = $_POST['payment_id'];
-        
+        $status_note = isset($_POST['payment_status_note']) ? $_POST['payment_status_note'] : '';
         // Begin transaction
         $conn->begin_transaction();
 
@@ -27,13 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
         $staff_id_for_verification = $_SESSION['staff_id'];
         $update_payment->bind_param("sii", $staff_id_for_verification, $payment_id, $booking_id);
         $update_payment->execute();
-        
-        // Update booking status to 'confirmed'
+
+        // Update booking status to note or 'confirmed'
+        $new_status = $status_note ? $status_note : 'confirmed';
         $update_booking_status = $conn->prepare("UPDATE bookings SET status = ? WHERE booking_id = ?");
-        $status_confirmed = 'confirmed';
-        $update_booking_status->bind_param("si", $status_confirmed, $booking_id);
+        $update_booking_status->bind_param("si", $new_status, $booking_id);
         $update_booking_status->execute();
-        
+
         $conn->commit();
 
         $_SESSION['success'] = "Payment has been confirmed successfully!";
@@ -336,7 +336,7 @@ try {
         <a href="customer_booking_staff.php" class="active"><i class="fas fa-file-invoice-dollar"></i> Payment Verification</a>
         <a href="package_detail_staff.php"><i class="fas fa-box"></i> Package Details</a>
         <a href="timetable_staff.php"><i class="fas fa-clock"></i> Timetable</a>
-        <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+        <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');"><i class="fas fa-sign-out-alt"></i> Log Out</a>
     </div>
 
     <div class="main">
@@ -367,11 +367,11 @@ try {
         <div class="filter-box">
             <select id="statusFilter" onchange="filterBookings()">
                 <option value="">All Payment Status</option>
-                <option value="pending">Pending Payment</option>
-                <option value="paid">Paid (Unverified)</option>
-                <option value="verified">Verified</option>
+                <option value="Pending Payment">Pending Payment</option>
+                <option value="Payment Received">Payment Received</option>
+                <option value="Payment Confirmed">Payment Confirmed</option>
             </select>
-  </div>
+        </div>
 
         <div class="table-container">
             <table id="bookingsTable">
@@ -382,7 +382,6 @@ try {
                         <th>Package & Amount</th>
                         <th>Booking Date</th>
                         <th>Payment Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -411,7 +410,7 @@ try {
                                 echo $arrival->format('d M Y'); 
                             ?>
                         </td>
-                        <td>
+                        <td style="vertical-align:top; min-width:270px;">
                             <span class="payment-status status-<?php echo htmlspecialchars($booking['payment_status']); ?>">
                                 <?php 
                                     switch($booking['payment_status']) {
@@ -426,42 +425,46 @@ try {
                                     }
                                 ?>
                             </span>
-                            <?php if ($booking['payment_date']): ?>
-                                <div class="payment-info">
-                                    <i class="fas fa-calendar"></i> <?php echo (new DateTime($booking['payment_date']))->format('d M Y H:i'); ?><br>
-                                    <i class="fas fa-money-bill"></i> RM <?php echo number_format($booking['paid_amount'], 2); ?><br>
-                                    <i class="fas fa-credit-card"></i> <?php echo htmlspecialchars($booking['payment_method']); ?>
-                                    <?php 
-                                    if ($booking['payment_status'] === 'verified' && $booking['payment_details']) {
-                                        $details = json_decode($booking['payment_details'], true);
-                                        if (isset($details['verified_date'])) {
-                                            echo '<br><i class="fas fa-check-circle"></i> Confirmed on ' . 
-                                                 (new DateTime($details['verified_date']))->format('d M Y H:i');
-                                        }
+                            <?php 
+                                $paid = floatval($booking['paid_amount']);
+                                $total = floatval($booking['total_price']);
+                                $outstanding = $total - $paid;
+                            ?>
+                            <div class="payment-info">
+                                <i class="fas fa-money-bill"></i> Paid: RM <?php echo number_format($paid, 2); ?> / RM <?php echo number_format($total, 2); ?><br>
+                                <?php if ($outstanding > 0): ?>
+                                    <span style="color:#c0392b;font-weight:bold;">Outstanding: RM <?php echo number_format($outstanding, 2); ?></span>
+                                <?php else: ?>
+                                    <span style="color:#27ae60;font-weight:bold;">Fully Paid</span>
+                                <?php endif; ?>
+                                <?php 
+                                if ($booking['payment_status'] === 'verified' && $booking['payment_details']) {
+                                    $details = json_decode($booking['payment_details'], true);
+                                    if (isset($details['verified_date'])) {
+                                        echo '<br><i class="fas fa-check-circle"></i> Confirmed on ' . 
+                                             (new DateTime($details['verified_date']))->format('d M Y H:i');
                                     }
-                                    ?>
-                                </div>
-                            <?php endif; ?>
-                        </td>
-                        <td class="actions">
-                            <form method="post" style="display: inline-flex;">
-                                <input type="hidden" name="booking_id" value="<?php echo $booking['booking_id']; ?>">
-                                <input type="hidden" name="payment_id" value="<?php echo $booking['payment_id']; ?>">
-                                <button type="submit" name="verify_payment" class="verify-btn" 
-                                        <?php echo ($booking['payment_status'] !== 'paid') ? 'disabled' : ''; ?>>
-                                    <i class="fas fa-check"></i> Confirm Payment
-                                </button>
-                            </form>
-                            
-                            <a href="edit_booking.php?id=<?php echo $booking['booking_id']; ?>" class="btn btn-edit">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            
-                            <a href="delete_booking_staff.php?id=<?php echo $booking['booking_id']; ?>" 
-                               class="btn btn-delete"
-                               onclick="return confirm('Are you sure you want to delete this booking?');">
-                                <i class="fas fa-trash"></i> Delete
-                            </a>
+                                }
+                                ?>
+                            </div>
+                            <div class="actions" style="margin-top:12px; background: #f8f9ff; border-radius: 18px; padding: 10px 10px 8px 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <?php 
+                                    $can_confirm = ($booking['payment_status'] === 'paid');
+                                    $disabled = $can_confirm ? '' : 'disabled';
+                                ?>
+                                <form method="post" style="display: flex; align-items:center; gap:10px; width:100%;" onsubmit="return checkStatusSelected(this)">
+                                    <input type="hidden" name="booking_id" value="<?php echo $booking['booking_id']; ?>">
+                                    <input type="hidden" name="payment_id" value="<?php echo $booking['payment_id']; ?>">
+                                    <select name="payment_status_note" required class="status-dropdown" style="border-radius:16px; padding:7px 16px; font-size:1em; background: #fff; border: 1.5px solid #d1d5db; min-width: 150px; <?php echo $disabled ? 'opacity:0.6;pointer-events:none;' : '' ?>">
+                                        <option value="">Select Status</option>
+                                        <option value="not complete">Payment Not Complete</option>
+                                        <option value="complete">Payment Complete</option>
+                                    </select>
+                                    <button type="submit" name="verify_payment" class="verify-btn" style="border-radius:16px; font-size:1em; padding:7px 18px; <?php echo $disabled ? 'background:#bdc3c7;cursor:not-allowed;opacity:0.7;' : '' ?>" <?php echo $disabled ? 'disabled' : ''; ?>>
+                                        <i class="fas fa-check"></i> Confirm Payment
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -479,7 +482,7 @@ try {
     function searchBookings() {
         var input = document.getElementById("searchInput");
         var filter = input.value.toLowerCase();
-        var statusFilter = document.getElementById("statusFilter").value.toLowerCase();
+        var statusFilter = document.getElementById("statusFilter").value;
         var table = document.getElementById("bookingsTable");
         var tr = table.getElementsByTagName("tr");
 
@@ -493,7 +496,7 @@ try {
                                  td[2].textContent; // Package Details
                 
                 var statusElement = td[4].querySelector('.payment-status');
-                var status = statusElement ? statusElement.textContent.toLowerCase() : '';
+                var status = statusElement ? statusElement.textContent : '';
                 
                 var matchesSearch = textToSearch.toLowerCase().indexOf(filter) > -1;
                 var matchesStatus = statusFilter === '' || status.includes(statusFilter);
@@ -508,6 +511,31 @@ try {
     function filterBookings() {
         searchBookings();
     }
+
+    // Enable the Confirm Payment button only when a status is selected
+    function checkStatusSelected(form) {
+        var select = form.querySelector('.status-dropdown');
+        var btn = form.querySelector('button[type="submit"]');
+        if (!select.value) {
+            btn.disabled = true;
+            select.focus();
+            return false;
+        }
+        btn.disabled = false;
+        return true;
+    }
+    // Attach event listeners to all dropdowns
+    window.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.status-dropdown').forEach(function(select) {
+            var btn = select.form.querySelector('button[type="submit"]');
+            if (select.disabled || btn.disabled) return;
+            select.addEventListener('change', function() {
+                btn.disabled = !select.value;
+            });
+            // Initial state
+            btn.disabled = !select.value;
+        });
+    });
     </script>
 </body>
 </html>
