@@ -10,7 +10,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <!-- Navigation Menu Styles -->
 <style>
     .nav-menu {
-        background: white;
+        background: #fff;
         padding: 0 2%;
         display: flex;
         justify-content: space-between;
@@ -19,51 +19,91 @@ $current_page = basename($_SERVER['PHP_SELF']);
         position: sticky;
         top: 0;
         z-index: 1000;
-        height: 60px;
+        height: 70px;
     }
 
     .nav-logo {
-        font-size: 20px;
+        font-size: 24px;
         font-weight: bold;
         color: #333;
         text-decoration: none;
-        white-space: nowrap;
     }
 
     .nav-menu-links {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.5rem;
     }
 
     .nav-welcome-msg {
         color: #6b4423;
         font-size: 14px;
         background: #f8f4e9;
-        padding: 6px 12px;
-        border-radius: 15px;
-        white-space: nowrap;
+        padding: 8px 15px;
+        border-radius: 20px;
+        margin-right: 1rem;
     }
 
-    .nav-menu-links a {
+    .nav-menu-links > a, .dropdown .dropbtn {
         text-decoration: none;
-        color: #654321;
+        color: white;
+        background-color: #8c6d52; /* Darker aesthetic brown */
         font-size: 14px;
-        padding: 6px 12px;
-        border-radius: 15px;
-        transition: all 0.3s ease;
-        white-space: nowrap;
+        padding: 10px 20px;
+        border-radius: 20px;
+        transition: all 0.2s ease-in-out;
+        border: none;
+        cursor: pointer;
+        font-family: 'Arial', sans-serif;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        transform: translateY(0);
     }
 
-    .nav-menu-links a:hover {
-        background: rgba(139, 94, 52, 0.1);
-        color: #8b5e34;
+    .nav-menu-links > a:hover, .dropdown .dropbtn:hover {
+        background-color: #735b43; /* Darker on hover */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
     }
 
-    .nav-menu-links a.active {
-        background: rgba(255, 0, 0, 0.1);
-        color: #ff0000;
-        font-weight: 500;
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: transparent; /* No background */
+        min-width: 160px;
+        box-shadow: none; /* No shadow */
+        z-index: 1;
+        padding-top: 10px; /* Space from main button */
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .dropdown-content a {
+        color: #333;
+        padding: 10px 20px;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+        background-color: #d3bfa8; /* Lighter aesthetic brown */
+        border-radius: 20px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        transition: all 0.2s ease-in-out;
+        transform: translateY(0);
+    }
+
+    .dropdown-content a:hover {
+        background-color: #c9bca7; /* Darker on hover */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transform: translateY(-2px);
+    }
+
+    .dropdown-content.show {
+        display: block;
     }
 
     .nav-menu-btn {
@@ -117,14 +157,26 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <button class="nav-menu-btn" onclick="toggleNavMenu()">☰</button>
     <div class="nav-menu-links" id="navMenuLinks">
         <span class="nav-welcome-msg">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</span>
-        <a href="view_packages.php" <?php echo $current_page == 'view_packages.php' ? 'class="active"' : ''; ?>>Packages</a>
-        <a href="makeBooking.php" <?php echo $current_page == 'makeBooking.php' ? 'class="active"' : ''; ?>>Booking</a>
-        <a href="my_bookings.php" <?php echo $current_page == 'my_bookings.php' ? 'class="active"' : ''; ?>>My Bookings</a>
-        <a href="payment.php" <?php echo $current_page == 'payment.php' ? 'class="active"' : ''; ?>>Payment</a>
-        <a href="feedback.php" <?php echo $current_page == 'feedback.php' ? 'class="active"' : ''; ?>>Feedback</a>
-        <a href="notifications.php" <?php echo $current_page == 'notifications.php' ? 'class="active"' : ''; ?>>Notifications</a>
-        <a href="review.php" <?php echo $current_page == 'review.php' ? 'class="active"' : ''; ?>>Review</a>
-        <a href="#" onclick="confirmLogout(); return false;">Logout</a>
+        
+        <div class="dropdown">
+            <button class="dropbtn" onclick="toggleDropdown(this)">Reservation</button>
+            <div class="dropdown-content">
+                <a href="makeBooking.php">Book</a>
+                <a href="my_bookings.php">MyBookings</a>
+            </div>
+        </div>
+
+        <a href="notifications.php">Notification</a>
+
+        <div class="dropdown">
+            <button class="dropbtn" onclick="toggleDropdown(this)">Rate us</button>
+            <div class="dropdown-content">
+                <a href="feedback.php">give Feedback</a>
+                <a href="review.php">view reviews</a>
+            </div>
+        </div>
+        
+        <a href="#" onclick="confirmLogout(); return false;">Log Out</a>
     </div>
 </nav>
 
@@ -135,9 +187,28 @@ $current_page = basename($_SERVER['PHP_SELF']);
         navLinks.classList.toggle('show');
     }
 
+    function toggleDropdown(button) {
+        // Close other dropdowns
+        closeAllDropdowns(button);
+        // Toggle current dropdown
+        const dropdownContent = button.nextElementSibling;
+        dropdownContent.classList.toggle('show');
+    }
+
     function confirmLogout() {
         if (confirm('Are you sure you want to logout?')) {
             window.location.href = 'logout.php';
+        }
+    }
+    
+    function closeAllDropdowns(exceptButton) {
+        const dropdowns = document.querySelectorAll('.dropdown-content');
+        const dropbtns = document.querySelectorAll('.dropbtn');
+
+        for (let i = 0; i < dropbtns.length; i++) {
+            if (dropbtns[i] !== exceptButton) {
+                dropbtns[i].nextElementSibling.classList.remove('show');
+            }
         }
     }
 
@@ -147,6 +218,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
         const menuBtn = document.querySelector('.nav-menu-btn');
         if (!navLinks.contains(event.target) && !menuBtn.contains(event.target)) {
             navLinks.classList.remove('show');
+        }
+
+        // Close dropdowns when clicking outside
+        if (!event.target.matches('.dropbtn')) {
+            closeAllDropdowns(null);
         }
     });
 </script> 
