@@ -37,6 +37,19 @@ if ($result) {
     $ongoing_camps = mysqli_fetch_assoc($result)['total'];
 }
 
+// Fetch total tasks assigned to this staff
+$total_tasks = 0;
+$tasks_query = "SELECT COUNT(*) as total FROM bookings WHERE staff_id = $staff_id";
+$result = mysqli_query($conn, $tasks_query);
+if ($result) {
+    $total_tasks = mysqli_fetch_assoc($result)['total'];
+}
+// Add facilities count
+$facilities_query = "SELECT COUNT(*) as total FROM staff_facilities WHERE staff_id = $staff_id";
+$result = mysqli_query($conn, $facilities_query);
+if ($result) {
+    $total_tasks += mysqli_fetch_assoc($result)['total'];
+}
 
 // Fetch recent bookings (last 3 bookings with 'confirmed' status)
 $recent_bookings = [];
@@ -44,7 +57,7 @@ $recent_query = "SELECT b.booking_id, b.full_name as customer_name, p.package_na
                 FROM bookings b 
                 LEFT JOIN packages p ON b.package_id = p.package_id 
                 WHERE b.status = 'confirmed'
-                ORDER BY b.booking_id DESC 
+                ORDER BY b.arrival_date DESC 
                 LIMIT 3";
 $result = mysqli_query($conn, $recent_query);
 if ($result) {
@@ -188,16 +201,94 @@ if ($result) {
         .edit-profile:hover {
             background-color: #343795;
         }
+        .recent-bookings-row {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-top: 18px;
+        }
+        .recent-booking-card {
+            min-width: 320px;
+            background: linear-gradient(120deg, #e0e7ff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(80,80,160,0.10);
+            padding: 22px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 8px solid #6f74c6;
+            border-right: 2px solid #e0e7ff;
+            position: relative;
+        }
+        .recent-booking-card.confirmed {
+            background: linear-gradient(120deg, #e0ffe7 0%, #e0e7ff 100%);
+            border-left-color: #27ae60;
+        }
+        .recent-booking-card.pending {
+            background: linear-gradient(120deg, #fffbe0 0%, #e0e7ff 100%);
+            border-left-color: #f39c12;
+        }
+        .recent-booking-card.cancelled {
+            background: linear-gradient(120deg, #ffe0e0 0%, #e0e7ff 100%);
+            border-left-color: #e74c3c;
+        }
+        .recent-booking-card.other {
+            background: linear-gradient(120deg, #e0f0ff 0%, #e0e7ff 100%);
+            border-left-color: #3498db;
+        }
+        .recent-booking-card:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 8px 32px rgba(80,80,160,0.18);
+            border-color: #6f74c6;
+        }
+        .recent-booking-card .booking-id {
+            font-weight: bold;
+            color: #6f74c6;
+            font-size: 1.1em;
+            margin-bottom: 2px;
+        }
+        .recent-booking-card .customer {
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 2px;
+        }
+        .recent-booking-card .package {
+            color: #555;
+            margin-bottom: 2px;
+        }
+        .recent-booking-card .dates {
+            color: #444;
+            font-size: 0.98em;
+            margin-bottom: 2px;
+        }
+        .recent-booking-card .status {
+            font-weight: bold;
+            font-size: 1em;
+            margin-top: 4px;
+        }
+        .recent-booking-card .status.confirmed { color: #27ae60; }
+        .recent-booking-card .status.pending { color: #f39c12; }
+        .recent-booking-card .status.cancelled { color: #e74c3c; }
+        .recent-booking-card .status.other { color: #3498db; }
+        .recent-booking-card i {
+            margin-right: 7px;
+            color: #6f74c6;
+        }
+        @media (max-width: 900px) {
+            .recent-booking-card { min-width: 240px; padding: 16px 10px; }
+        }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2><i class="fas fa-user-shield"></i> Staff</h2>
         <a href="staff_dashboard.php" class="active"><i class="fas fa-home"></i> Dashboard</a>
-        <a href="customer_booking_staff.php"><i class="fas fa-calendar-check"></i> Customer Booking</a>
+        <a href="customer_booking_staff.php"><i class="fas fa-calendar-check"></i> Payment Verification</a>
         <a href="package_detail_staff.php"><i class="fas fa-box"></i> Package Details</a>
         <a href="timetable_staff.php"><i class="fas fa-clock"></i> Timetable</a>
-        <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+        <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');"><i class="fas fa-sign-out-alt"></i> Log Out</a>
     </div>
 
     <div class="main">
@@ -229,7 +320,7 @@ if ($result) {
                 <?php echo $ongoing_camps; ?><br>Ongoing Camps
             </div>
             <div class="metric-box blue">
-                <?php echo $available_lots; ?><br>Available Camp Lots
+                <?php echo $total_tasks; ?><br>Total Tasks
             </div>
         </div>
 
@@ -238,23 +329,19 @@ if ($result) {
             <?php if (empty($recent_bookings)): ?>
                 <p>No recent bookings found.</p>
             <?php else: ?>
+                <div class="recent-bookings-row">
                 <?php foreach ($recent_bookings as $booking): ?>
-                    <div class="booking-entry">
-                        <strong>Booking ID:</strong> <?php echo htmlspecialchars($booking['booking_id']); ?><br>
-                        <strong>Customer:</strong> <?php echo htmlspecialchars($booking['customer_name']); ?><br>
-                        <strong>Package:</strong> <?php echo htmlspecialchars($booking['package_name']); ?><br>
-                        <strong>Check-in:</strong> <?php echo date('Y-m-d', strtotime($booking['arrival_date'])); ?><br>
-                        <strong>Check-out:</strong> <?php echo date('Y-m-d', strtotime($booking['departure_date'])); ?><br>
-                        <strong>Status:</strong> 
-                        <span style="color: <?php 
-                            echo $booking['status'] === 'confirmed' ? '#27ae60' : 
-                                ($booking['status'] === 'pending' ? '#f39c12' : 
-                                ($booking['status'] === 'cancelled' ? '#e74c3c' : '#3498db')); 
-                        ?>">
-                            <?php echo ucfirst(htmlspecialchars($booking['status'])); ?>
-                        </span>
+                    <div class="recent-booking-card <?php echo htmlspecialchars($booking['status']); ?>">
+                        <div class="booking-id"><i class="fas fa-hashtag"></i> <?php echo htmlspecialchars($booking['booking_id']); ?></div>
+                        <div class="customer"><i class="fas fa-user"></i> <?php echo htmlspecialchars($booking['customer_name']); ?></div>
+                        <div class="package"><i class="fas fa-box"></i> <?php echo htmlspecialchars($booking['package_name']); ?></div>
+                        <div class="dates"><i class="fas fa-calendar-alt"></i> <?php echo date('Y-m-d', strtotime($booking['arrival_date'])); ?> to <?php echo date('Y-m-d', strtotime($booking['departure_date'])); ?></div>
+                        <div class="status <?php echo htmlspecialchars($booking['status']); ?>">
+                            <i class="fas fa-circle"></i> <?php echo ucfirst(htmlspecialchars($booking['status'])); ?>
+                        </div>
                     </div>
                 <?php endforeach; ?>
+                </div>
             <?php endif; ?>
         </div>
     </div>

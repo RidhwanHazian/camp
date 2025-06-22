@@ -1,8 +1,8 @@
 <?php
-session_start();                    // Start session after enabling error reporting
+include 'session_check.php';
+checkStaffSession();
+
 include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession(); 
 
 $staff_id = $_SESSION['staff_id']; // Use staff_id from session
 $staff_name = '';

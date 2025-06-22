@@ -2,89 +2,136 @@
 // package_detail_staff.php
 include 'session_check.php';
 checkStaffSession();
+include 'db_connection.php';
 
-include 'db_connection.php'; // Your DB connection file
+// Handle per-date slot update
+$success = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_slot'])) {
+    $package_id = intval($_POST['package_id']);
+    $slot_date = $_POST['slot_date'];
+    $slot_limit = intval($_POST['slot_limit']);
 
-// Fetch packages
-$packages = [];
-$sql = "SELECT * FROM packages";
+    // Check if entry exists
+    $stmt = $conn->prepare("SELECT * FROM package_slots WHERE package_id = ? AND slot_date = ?");
+    $stmt->bind_param("is", $package_id, $slot_date);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        // Update
+        $update = $conn->prepare("UPDATE package_slots SET slot_limit = ? WHERE package_id = ? AND slot_date = ?");
+        $update->bind_param("iis", $slot_limit, $package_id, $slot_date);
+        $update->execute();
+    } else {
+        // Insert
+        $insert = $conn->prepare("INSERT INTO package_slots (package_id, slot_date, slot_limit) VALUES (?, ?, ?)");
+        $insert->bind_param("isi", $package_id, $slot_date, $slot_limit);
+        $insert->execute();
+    }
+    $success = true;
+}
+
+// Fetch all (package, date) combinations with bookings
+$sql = "SELECT 
+            b.package_id,
+            p.package_name,
+            b.arrival_date,
+            COALESCE(ps.slot_limit, 0) AS slot_limit,
+            COUNT(b.booking_id) AS booking_count
+        FROM bookings b
+        JOIN packages p ON b.package_id = p.package_id
+        LEFT JOIN package_slots ps 
+            ON b.package_id = ps.package_id AND b.arrival_date = ps.slot_date
+        WHERE b.arrival_date >= CURDATE()
+        GROUP BY b.package_id, p.package_name, b.arrival_date, ps.slot_limit
+        ORDER BY p.package_name ASC, b.arrival_date ASC";
 $result = $conn->query($sql);
+$package_dates = [];
 while ($row = $result->fetch_assoc()) {
-    $packages[] = $row;
+    $package_dates[] = $row;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Package Details - Staff</title>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: #f7f8fa;
-            margin: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { display: flex; background-color: #f0f2f5; }
         .sidebar {
-            width: 260px;
-            background: #6c5ce7;
-            color: #fff;
+            width: 250px;
+            background-color: #6f74c6;
+            color: white;
+            padding: 40px 20px;
             height: 100vh;
             position: fixed;
-            left: 0; top: 0;
-            display: flex;
-            flex-direction: column;
-            padding: 32px 0;
         }
         .sidebar h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
+            font-size: 48px;
             margin-bottom: 40px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .sidebar a {
-            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 26px;
             text-decoration: none;
-            font-size: 1.25rem;
-            font-weight: 600;
-            padding: 18px 40px;
-            display: block;
-            border-radius: 8px 0 0 8px;
-            margin-bottom: 8px;
-            transition: background 0.2s;
+            margin-bottom: 25px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
         }
-        .sidebar a.active, .sidebar a:hover {
-            background: #4834d4;
+        .sidebar a:hover {
+            background-color: #343795;
+            transform: translateX(10px);
         }
-        .main-content {
-            margin-left: 260px;
-            padding: 40px 60px;
+        .sidebar a.active {
+            background-color: #343795;
         }
-        .main-content h1 {
-            font-size: 2.5rem;
+        .main {
+            flex-grow: 1;
+            padding: 30px;
+            margin-left: 250px;
+        }
+        h1 {
+            font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 16px;
-        }
-        .card {
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(80, 80, 160, 0.08);
-            padding: 32px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 24px;
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(80,80,160,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        thead {
+            background: #6f74c6;
+            color: #fff;
+        }
+        thead th {
+            background: #6f74c6;
+            color: #fff;
+        }
+        th:first-child {
+            border-radius: 16px 0 0 0;
+        }
+        th:last-child {
+            border-radius: 0 16px 0 0;
         }
         th, td {
             padding: 16px 12px;
             text-align: left;
         }
         th {
-            background: #6c5ce7;
-            color: #fff;
             font-size: 1.1rem;
         }
         tr {
@@ -93,140 +140,87 @@ while ($row = $result->fetch_assoc()) {
         tr:nth-child(even) {
             background: #ecebff;
         }
-        .btn {
-            background: #6c5ce7;
-            color: #fff;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn:hover {
-            background: #4834d4;
-        }
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.3);
-            justify-content: center;
+        form {
+            display: flex;
+            gap: 8px;
             align-items: center;
         }
-        .modal-content {
-            background: #fff;
-            border-radius: 12px;
-            padding: 32px 28px;
-            min-width: 320px;
-            box-shadow: 0 4px 24px rgba(80, 80, 160, 0.12);
-            position: relative;
+        input[type="number"] {
+            width: 70px;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-        .modal-content h2 {
-            font-size: 1.5rem;
-            margin-bottom: 18px;
-        }
-        .close {
-            position: absolute;
-            right: 18px;
-            top: 12px;
-            font-size: 1.5rem;
-            color: #6c5ce7;
-            cursor: pointer;
-        }
-        select, .modal-content button {
-            font-size: 1rem;
-            padding: 8px 12px;
-            margin-top: 10px;
-            border-radius: 6px;
-            border: 1px solid #d1d1e0;
-        }
-        .modal-content button {
-            background: #6c5ce7;
+        button[type="submit"] {
+            background: #6f74c6;
             color: #fff;
             border: none;
-            margin-top: 18px;
-            font-weight: 600;
+            padding: 7px 16px;
+            border-radius: 4px;
             cursor: pointer;
+            font-weight: 600;
         }
-        .modal-content button:hover {
-            background: #4834d4;
+        button[type="submit"]:hover {
+            background: #343795;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            border: 1px solid #c3e6cb;
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2>Staff</h2>
-        <a href="staff_dashboard.php">Dashboard</a>
-        <a href="customer_booking_staff.php">Customer Booking</a>
-        <a href="package_detail_staff.php" class="active">Package Details</a>
-        <a href="timetable_staff.php">Timetable</a>
-        <a href="logout.php">Log Out</a>
+        <h2><i class="fas fa-user-shield"></i> Staff</h2>
+        <a href="staff_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="customer_booking_staff.php"><i class="fas fa-calendar-check"></i> Payment Verification</a>
+        <a href="package_detail_staff.php" class="active"><i class="fas fa-box"></i> Package Details</a>
+        <a href="timetable_staff.php"><i class="fas fa-clock"></i> Timetable</a>
+        <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');"><i class="fas fa-sign-out-alt"></i> Log Out</a>
     </div>
-    <div class="main-content">
-        <h1>Package Details</h1>
-        <div class="card">
-            <p style="font-size:1.1rem; margin-bottom:18px;">Update available packages for customers</p>
-            <table>
+    <div class="main">
+        <h1>Manage Package Slots Per Date</h1>
+        <?php if ($success): ?>
+            <div class="success-message">Slot limit updated successfully!</div>
+        <?php endif; ?>
+        <table>
+            <thead>
                 <tr>
-                    <th>Package ID</th>
-                    <th>Package Name</th>
-                    <th>Description</th>
-                    <th>Duration</th>
+                    <th style="color: #fff; background: #6f74c6;">Package Name</th>
+                    <th>Date</th>
+                    <th>Slot Limit</th>
+                    <th>Booked</th>
+                    <th>Status</th>
                     <th>Action</th>
                 </tr>
-                <?php foreach ($packages as $pkg): ?>
+            </thead>
+            <tbody>
+                <?php foreach ($package_dates as $row): ?>
                 <tr>
-                    <td><?= htmlspecialchars($pkg['package_id']) ?></td>
-                    <td><?= htmlspecialchars($pkg['package_name']) ?></td>
-                    <td><?= htmlspecialchars($pkg['description'] ?? '') ?></td>
-                    <td><?= htmlspecialchars($pkg['duration'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($row['package_name']) ?></td>
+                    <td><?= htmlspecialchars($row['arrival_date']) ?></td>
                     <td>
-                        <button class="btn" onclick="openModal('<?= $pkg['package_id'] ?>')">Edit Package</button>
+                        <form method="post" style="display:inline;">
+                            <input type="number" name="slot_limit" value="<?= (int)$row['slot_limit'] ?>" min="1" required>
+                            <input type="hidden" name="package_id" value="<?= $row['package_id'] ?>">
+                            <input type="hidden" name="slot_date" value="<?= $row['arrival_date'] ?>">
+                    </td>
+                    <td><?= $row['booking_count'] ?></td>
+                    <td>
+                        <?= ($row['slot_limit'] > 0 && $row['booking_count'] >= $row['slot_limit']) ? 'Full' : 'Available' ?>
+                    </td>
+                    <td>
+                            <button type="submit" name="update_slot">Save</button>
+                        </form>
                     </td>
                 </tr>
                 <?php endforeach; ?>
-            </table>
-        </div>
+            </tbody>
+        </table>
     </div>
-
-    <!-- Modal -->
-    <div class="modal" id="statusModal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Edit Package</h2>
-            <form id="updateStatusForm" method="post" action="update_package_staff.php">
-                <input type="hidden" name="package_id" id="modalPackageId">
-                <label for="packageName">Package Name:</label><br>
-                <input type="text" name="package_name" id="packageName" required><br>
-                <label for="description">Description:</label><br>
-                <textarea name="description" id="description" rows="4"></textarea><br>
-                <label for="duration">Duration:</label><br>
-                <input type="text" name="duration" id="duration"><br>
-                <button type="submit">Update Package</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        function openModal(packageId) {
-            document.getElementById('modalPackageId').value = packageId;
-            document.getElementById('statusModal').style.display = 'flex';
-        }
-        function closeModal() {
-            document.getElementById('statusModal').style.display = 'none';
-        }
-        // Close modal on outside click
-        window.onclick = function(event) {
-            var modal = document.getElementById('statusModal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
-    </script>
 </body>
 </html>
