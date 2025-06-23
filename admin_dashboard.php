@@ -1,9 +1,3 @@
-<?php
-session_start();                    // Start session after enabling error reporting
-include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession();
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,6 +222,10 @@ checkAdminSession();
     $bookingQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM bookings");
     $bookingCount = mysqli_fetch_assoc($bookingQuery)['total'];
 
+    // Query total packages
+    $packageQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM packages");
+    $packageCount = mysqli_fetch_assoc($packageQuery)['total'];
+
     // Query total staff
     $staffQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM staff");
     $staffCount = mysqli_fetch_assoc($staffQuery)['total'];
@@ -235,11 +233,6 @@ checkAdminSession();
     // Query total profit
     $profitQuery = mysqli_query($conn, "SELECT SUM(amount) as total FROM payments");
     $totalProfit = mysqli_fetch_assoc($profitQuery)['total'] ?? 0;
-
-    // Query total profit
-    $packageQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM packages");
-    $totalPackage = mysqli_fetch_assoc($packageQuery)['total'];
-
 
     // Dynamic package distribution
     $packageLabels = [];
@@ -281,11 +274,11 @@ checkAdminSession();
         <div class="value"><?= $bookingCount ?></div>
       </div>
       <div class="card">
-        <h3>Staff Members</h3>
-        <div class="value"><?= $totalPackage ?></div>
+        <h3>Total Packages</h3>
+        <div class="value"><?= $packageCount ?></div>
       </div>
       <div class="card">
-        <h3>Total Packages</h3>
+        <h3>Staff Members</h3>
         <div class="value"><?= $staffCount ?></div>
       </div>
     </div>
