@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'db_connection.php';
 include 'session_check.php';
 checkAdminSession();
@@ -10,9 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $facility_id = intval($_POST['facility_id']);
 
     if (!empty($staff_id) && !empty($facility_id)) {
-        $check_sql = "SELECT * FROM staff_facilities WHERE staff_id = ? AND facility_id = ?";
+        // Check if the facility is already assigned to any staff and not yet completed
+        $check_sql = "SELECT * FROM staff_facilities WHERE facility_id = ? AND status = 'pending'";
         $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("ii", $staff_id, $facility_id);
+        $check_stmt->bind_param("i", $facility_id);
         $check_stmt->execute();
         $check_result = $check_stmt->get_result();
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert_stmt->execute();
             $_SESSION['success'] = "Facility assigned successfully.";
         } else {
-            $_SESSION['error'] = "This facility is already assigned to the selected staff.";
+            $_SESSION['error'] = "This facility is already assigned to another staff and not yet completed.";
         }
     } else {
         $_SESSION['error'] = "Please fill in all required fields.";
