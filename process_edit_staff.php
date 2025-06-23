@@ -1,8 +1,6 @@
 <?php
-session_start();                    // Start session after enabling error reporting
+session_start();
 include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession(); 
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {
