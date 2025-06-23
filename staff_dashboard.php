@@ -1,8 +1,8 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkStaffSession();
-
-include 'db_connection.php';
 
 $staff_id = $_SESSION['staff_id'];
 $staff_name = $_SESSION['full_name'] ?? 'Staff'; // Use full_name for consistency

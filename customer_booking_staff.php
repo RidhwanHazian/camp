@@ -1,8 +1,8 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkStaffSession();
-
-require_once 'db_connection.php';
 
 // Handle payment verification
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {

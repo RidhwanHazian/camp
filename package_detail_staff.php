@@ -1,8 +1,9 @@
 <?php
 // package_detail_staff.php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkStaffSession();
-include 'db_connection.php';
 
 // Handle per-date slot update
 $success = false;

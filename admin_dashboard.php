@@ -236,6 +236,11 @@ checkAdminSession();
     $profitQuery = mysqli_query($conn, "SELECT SUM(amount) as total FROM payments");
     $totalProfit = mysqli_fetch_assoc($profitQuery)['total'] ?? 0;
 
+    // Query total profit
+    $packageQuery = mysqli_query($conn, "SELECT COUNT(*) as total FROM packages");
+    $totalPackage = mysqli_fetch_assoc($packageQuery)['total'];
+
+
     // Dynamic package distribution
     $packageLabels = [];
     $packageCounts = [];
@@ -277,6 +282,10 @@ checkAdminSession();
       </div>
       <div class="card">
         <h3>Staff Members</h3>
+        <div class="value"><?= $totalPackage ?></div>
+      </div>
+      <div class="card">
+        <h3>Total Packages</h3>
         <div class="value"><?= $staffCount ?></div>
       </div>
     </div>
