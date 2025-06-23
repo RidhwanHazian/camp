@@ -76,239 +76,171 @@ echo "<!-- Number of reviews to display: " . (isset($reviews) ? count($reviews) 
     <title>Customer Reviews - TasikBiruCamps</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e9d5c0 0%, #bca48a 100%);
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            position: relative;
+            overflow-x: hidden;
         }
-
-        body {
-            background-color: #f5f5f5;
-            padding-top: 60px;
-        }
-
         .hero {
-            height: 300px;
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?ixlib=rb-4.0.3');
-            background-size: cover;
-            background-position: center;
+            height: 260px;
+            background: linear-gradient(120deg, #bca48a 60%, #e9d5c0 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #fff;
             text-align: center;
             position: relative;
-            margin-top: 60px;
+            border-radius: 0 0 40px 40px;
+            box-shadow: 0 4px 24px rgba(140,109,82,0.10);
         }
-
         .hero-content {
             z-index: 1;
         }
-
         .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-size: 2.8rem;
+            margin-bottom: 0.7rem;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            letter-spacing: 2px;
+            color: #fff7e6;
+            text-shadow: 1px 2px 8px #bca48a;
         }
-
         .rating-summary {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #8c6d52;
         }
-
         .stars {
             color: #ffd700;
             font-size: 1.5rem;
             margin: 0.5rem 0;
+            letter-spacing: 2px;
         }
-
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
-
         .reviews-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 2rem;
             padding: 2rem 0;
         }
-
         .review-card {
-            background: white;
-            border-radius: 12px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 22px;
+            box-shadow: 0 8px 32px rgba(140,109,82,0.13), 0 2px 8px rgba(140,109,82,0.10);
             overflow: hidden;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            border: 1.5px solid #e9d5c0;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
-
         .review-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-7px) scale(1.025);
+            box-shadow: 0 12px 36px rgba(140,109,82,0.18), 0 4px 16px rgba(140,109,82,0.13);
         }
-
         .review-media {
             position: relative;
             width: 100%;
-            padding-top: 75%; /* 4:3 Aspect Ratio */
+            padding-top: 70%;
             background: #f8f9fa;
             overflow: hidden;
+            border-radius: 0 0 18px 18px;
         }
-
-        .review-media img, 
-        .review-media video {
+        .review-media img, .review-media video {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+            border-radius: 0 0 18px 18px;
+            box-shadow: 0 2px 8px rgba(140,109,82,0.10);
         }
-
         .review-content {
-            padding: 1.5rem;
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            position: relative;
         }
-
         .review-header {
             display: flex;
             align-items: center;
             margin-bottom: 1rem;
             gap: 1rem;
         }
-
         .user-avatar {
-            width: 50px;
-            height: 50px;
+            width: 48px; height: 48px;
             border-radius: 50%;
-            background-color: #007bff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: linear-gradient(135deg, #bca48a 60%, #e9d5c0 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(140,109,82,0.10);
         }
-
-        .user-avatar i {
-            font-size: 24px;
-            color: white;
-        }
-
-        .user-info {
-            flex: 1;
-        }
-
+        .user-info { flex: 1; }
         .username {
             font-weight: bold;
-            color: #333;
-            margin-bottom: 0.25rem;
+            color: #8c6d52;
+            font-size: 1.1rem;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
-
         .package-name {
-            font-size: 0.9rem;
-            color: #666;
+            font-size: 0.98rem;
+            color: #bca48a;
+            margin-top: 2px;
         }
-
+        .review-date {
+            font-size: 0.92rem;
+            color: #bca48a;
+            margin-top: 2px;
+        }
         .review-rating {
-            margin: 1rem 0;
+            margin-bottom: 0.7rem;
         }
-
-        .review-rating .fas {
+        .review-rating .star {
             color: #ffd700;
+            font-size: 1.3rem;
             margin-right: 2px;
+            text-shadow: 0 1px 2px #fffbe6;
         }
-
-        .review-rating .fa-star-o {
-            color: #ccc;
-        }
-
         .review-text {
-            color: #444;
+            font-size: 1.08rem;
+            color: #5e4630;
+            margin-bottom: 0.5rem;
             line-height: 1.6;
-            margin-bottom: 1rem;
-            white-space: pre-line;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
-
-        .no-reviews {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 3rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        .cute-icon {
+            font-size: 1.2rem;
+            margin-right: 6px;
+            color: #ffb6b9;
         }
-
-        .no-reviews h2 {
-            color: #333;
-            margin-bottom: 1rem;
+        /* Decorative SVGs */
+        .bg-svg {
+            position: absolute;
+            z-index: 1;
+            opacity: 0.10;
+            pointer-events: none;
         }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .reviews-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Lightbox styles */
-        .lightbox {
-            display: none;
-            position: fixed;
+        .bg-svg.topleft {
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1100;
-            justify-content: center;
-            align-items: center;
+            width: 180px;
+            height: 180px;
         }
-
-        .lightbox.active {
-            display: flex;
+        .bg-svg.bottomright {
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
         }
-
-        .lightbox-content {
-            max-width: 90%;
-            max-height: 90%;
-        }
-
-        .lightbox-content img,
-        .lightbox-content video {
-            max-width: 100%;
-            max-height: 90vh;
-            object-fit: contain;
-        }
-
-        .close-lightbox {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
-            font-size: 2rem;
-            cursor: pointer;
-        }
-
-        .additional-photos {
-            display: flex;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            background: #f8f9fa;
-            overflow-x: auto;
-        }
-
-        .thumbnail {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .thumbnail:hover {
-            transform: scale(1.1);
+        @media (max-width: 700px) {
+            .container { padding: 0 0.2rem; }
+            .reviews-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+            .bg-svg.topleft, .bg-svg.bottomright { width: 100px; height: 100px; }
         }
     </style>
 </head>
@@ -355,7 +287,7 @@ echo "<!-- Number of reviews to display: " . (isset($reviews) ? count($reviews) 
                     <div class="review-content">
                         <div class="review-header">
                             <div class="user-avatar">
-                                <i class="fas fa-user"></i>
+                                <?php echo substr($review['username'], 0, 1); ?>
                             </div>
                             <div class="user-info">
                                 <div class="username">
@@ -442,5 +374,9 @@ echo "<!-- Number of reviews to display: " . (isset($reviews) ? count($reviews) 
         }
     });
 </script>
+
+<!-- Decorative SVGs -->
+<svg class="bg-svg topleft" viewBox="0 0 200 200" fill="none"><ellipse cx="100" cy="100" rx="100" ry="100" fill="#bca48a"/></svg>
+<svg class="bg-svg bottomright" viewBox="0 0 200 200" fill="none"><rect x="0" y="0" width="200" height="200" rx="60" fill="#8c6d52"/></svg>
 </body>
 </html>
