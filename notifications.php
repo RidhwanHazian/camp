@@ -135,191 +135,182 @@ function formatDate($date) {
     <title>TasikBiruCamps - Notifications</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5ede3 0%, #bca48a 100%) !important;
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            position: relative;
+            overflow-x: hidden;
         }
-
-        body {
-            background-color: #f5f5f5;
-            min-height: 100vh;
-        }
-
         .main-container {
-            background-image: url('campback.jpg');
-            background-size: cover;
-            background-position: center;
             min-height: calc(100vh - 60px);
-            padding: 2rem;
+            padding: 2rem 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
+            z-index: 2;
         }
-
         .notifications-container {
             max-width: 800px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.92);
             padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: 0 8px 32px rgba(255,182,193,0.13), 0 2px 8px rgba(140,109,82,0.10);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 2.5px solid #ffe5ec;
+            margin-top: 2rem;
         }
-
         .notifications-header {
             text-align: center;
             margin-bottom: 2rem;
         }
-
         .notifications-header h1 {
-            font-size: 2.5rem;
-            color: #333;
+            font-size: 2.2rem;
+            color: #e29578;
             margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            font-family: 'Baloo 2', 'Segoe UI', Arial, sans-serif;
         }
-
         .notifications-header p {
-            color: #666;
+            color: #bca48a;
             font-size: 1.1rem;
         }
-
         .notification-tabs {
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
-            border-bottom: 2px solid #dee2e6;
+            border-bottom: 2px solid #ffe5ec;
             padding-bottom: 1rem;
+            justify-content: center;
         }
-
         .tab-button {
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 1.2rem;
             border: none;
             background: none;
-            color: #666;
+            color: #e29578;
             font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .tab-button.active {
-            color: #28a745;
             font-weight: 600;
+            border-radius: 18px 18px 0 0;
+            transition: background 0.2s, color 0.2s;
+            cursor: pointer;
+            font-family: 'Baloo 2', 'Segoe UI', Arial, sans-serif;
         }
-
-        .tab-button.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1rem;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: #28a745;
+        .tab-button.active, .tab-button:hover {
+            background: #ffe5ec;
+            color: #b5838d;
         }
-
-        .notification-list {
+        .notifications-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
-
         .notification-item {
-            background: white;
-            padding: 1rem;
-            border-radius: 10px;
-            border-left: 4px solid #ddd;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease;
+            background: #f5ede3 !important;
+            border-radius: 28px;
+            box-shadow: 0 8px 32px rgba(140,109,82,0.18), 0 2px 8px rgba(140,109,82,0.13);
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1.2rem;
+            border-left: 8px solid #ffd6e0;
+            position: relative;
+            transition: box-shadow 0.2s, transform 0.2s;
         }
-
         .notification-item:hover {
-            transform: translateX(5px);
+            box-shadow: 0 8px 32px rgba(255,182,193,0.18);
+            transform: translateY(-3px) scale(1.01);
         }
-
-        .notification-item.high-priority {
-            border-left-color: #dc3545;
+        .notification-icon {
+            font-size: 2.2rem;
+            color: #e29578;
+            margin-top: 2px;
+            position: relative;
         }
-
-        .notification-item.medium-priority {
-            border-left-color: #ffc107;
+        .cute-star {
+            position: absolute;
+            top: -10px;
+            right: -12px;
+            font-size: 1.1rem;
+            color: #ffd166;
+            filter: drop-shadow(0 1px 2px #fffbe6);
         }
-
-        .notification-item.low-priority {
-            border-left-color: #28a745;
-        }
-
-        .notification-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .notification-title {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .notification-date {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
         .notification-content {
-            color: #444;
-            line-height: 1.4;
+            flex: 1;
         }
-
+        .notification-title {
+            font-weight: bold;
+            color: #b5838d;
+            font-size: 1.13rem;
+            margin-bottom: 0.2rem;
+            font-family: 'Baloo 2', 'Segoe UI', Arial, sans-serif;
+        }
+        .notification-date {
+            color: #bca48a;
+            font-size: 0.98rem;
+            margin-left: 0.5rem;
+        }
+        .notification-message {
+            color: #6d6875;
+            font-size: 1.05rem;
+            margin-top: 0.2rem;
+        }
         .notification-actions {
-            margin-top: 0.5rem;
-            display: flex;
-            gap: 1rem;
+            margin-top: 0.7rem;
         }
-
         .notification-action {
-            color: #28a745;
+            color: #6ecbff;
             text-decoration: none;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
+            font-size: 1.02rem;
+            margin-right: 1.2rem;
+            transition: color 0.2s;
+            font-weight: 500;
         }
-
         .notification-action:hover {
+            color: #4e9cff;
             text-decoration: underline;
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
+        /* Decorative SVGs */
+        .bg-svg {
+            position: absolute;
+            z-index: 1;
+            opacity: 0.10;
+            pointer-events: none;
         }
-
-        .empty-state i {
-            font-size: 3rem;
-            color: #ddd;
-            margin-bottom: 1rem;
+        .bg-svg.topleft {
+            top: 0;
+            left: 0;
+            width: 180px;
+            height: 180px;
         }
-
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 1rem;
-            }
-
-            .notifications-container {
-                padding: 1.5rem;
-            }
-
-            .notifications-header h1 {
-                font-size: 2rem;
-            }
-
-            .notification-tabs {
-                flex-wrap: wrap;
-            }
+        .bg-svg.bottomright {
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+        }
+        .bg-svg.cloud {
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 220px;
+            height: 60px;
+            opacity: 0.13;
+        }
+        @media (max-width: 700px) {
+            .notifications-container { padding: 1rem 0.2rem; }
+            .bg-svg.topleft, .bg-svg.bottomright { width: 100px; height: 100px; }
         }
     </style>
+    <!-- Decorative SVGs -->
+    <svg class="bg-svg topleft" viewBox="0 0 200 200" fill="none"><ellipse cx="100" cy="100" rx="100" ry="100" fill="#ffd6e0"/></svg>
+    <svg class="bg-svg bottomright" viewBox="0 0 200 200" fill="none"><rect x="0" y="0" width="200" height="200" rx="60" fill="#b5838d"/></svg>
+    <svg class="bg-svg cloud" viewBox="0 0 220 60" fill="none"><ellipse cx="60" cy="30" rx="60" ry="30" fill="#fff"/><ellipse cx="160" cy="30" rx="50" ry="25" fill="#fff"/></svg>
 </head>
 <body>
 
@@ -347,13 +338,14 @@ function formatDate($date) {
                 </div>
             <?php else: ?>
                 <?php foreach ($upcoming_camps as $camp): ?>
-                    <div class="notification-item <?php echo $camp['priority']; ?>-priority">
-                        <div class="notification-header">
-                            <span class="notification-title"><?php echo htmlspecialchars($camp['package_name']); ?></span>
-                            <span class="notification-date"><?php echo formatDate($camp['arrival_date']); ?></span>
+                    <div class="notification-item <?php echo $camp['priority']; ?>">
+                        <div class="notification-icon">
+                            <i class="fas fa-campground"></i>
                         </div>
                         <div class="notification-content">
-                            <?php echo htmlspecialchars($camp['message']); ?>
+                            <div class="notification-title"><?php echo htmlspecialchars($camp['package_name']); ?></div>
+                            <div class="notification-date"><?php echo formatDate($camp['arrival_date']); ?></div>
+                            <div class="notification-message"><?php echo htmlspecialchars($camp['message']); ?></div>
                         </div>
                         <div class="notification-actions">
                             <a href="my_bookings.php?id=<?php echo $camp['booking_id']; ?>" class="notification-action">
@@ -365,12 +357,13 @@ function formatDate($date) {
 
                 <?php foreach ($payments as $payment): ?>
                     <div class="notification-item">
-                        <div class="notification-header">
-                            <span class="notification-title">Payment Received</span>
-                            <span class="notification-date"><?php echo formatDate($payment['payment_date']); ?></span>
+                        <div class="notification-icon">
+                            <i class="fas fa-receipt"></i>
                         </div>
                         <div class="notification-content">
-                            Payment of RM<?php echo number_format($payment['amount'], 2); ?> has been processed.
+                            <div class="notification-title">Payment Received</div>
+                            <div class="notification-date"><?php echo formatDate($payment['payment_date']); ?></div>
+                            <div class="notification-message">Payment of RM<?php echo number_format($payment['amount'], 2); ?> has been processed.</div>
                         </div>
                         <div class="notification-actions">
                             <a href="payment_success.php?id=<?php echo $payment['payment_id']; ?>" class="notification-action">
@@ -397,9 +390,9 @@ function showTab(tabName) {
     notifications.forEach(notification => {
         switch(tabName) {
             case 'upcoming':
-                notification.style.display = notification.classList.contains('high-priority') || 
-                                          notification.classList.contains('medium-priority') || 
-                                          notification.classList.contains('low-priority') ? 'block' : 'none';
+                notification.style.display = notification.classList.contains('high') || 
+                                          notification.classList.contains('medium') || 
+                                          notification.classList.contains('low') ? 'block' : 'none';
                 break;
             case 'bookings':
                 notification.style.display = notification.querySelector('.notification-title').textContent.includes('Package') ? 'block' : 'none';
