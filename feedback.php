@@ -4,11 +4,11 @@ checkCustomerSession();
 
 require_once 'db_connection.php';
 
-// Check if user has any paid bookings
+// Check if user has any completed bookings
 $stmt = $conn->prepare("
     SELECT COUNT(*) as paid_bookings 
     FROM bookings 
-    WHERE user_id = ? AND status = 'paid'
+    WHERE user_id = ? AND status = 'complete'
 ");
 $stmt->bind_param("i", $_SESSION['customer_id']);
 $stmt->execute();
@@ -22,7 +22,7 @@ if ($has_paid_bookings) {
         SELECT DISTINCT p.package_id, p.package_name 
         FROM bookings b
         JOIN packages p ON b.package_id = p.package_id
-        WHERE b.user_id = ? AND b.status = 'paid'
+        WHERE b.user_id = ? AND b.status = 'complete'
         AND NOT EXISTS (
             SELECT 1 FROM feedback f 
             WHERE f.user_id = b.user_id 
