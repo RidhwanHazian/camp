@@ -24,14 +24,6 @@ try {
         $stmt1->close();
     }
 
-    // Delete from task_assignment
-    $stmt2 = $conn->prepare("DELETE FROM task_assignment WHERE staff_id = ?");
-    if ($stmt2) {
-        $stmt2->bind_param("i", $staff_id);
-        $stmt2->execute();
-        $stmt2->close();
-    }
-
     // Unassign from bookings (set NULL instead of deleting booking)
     $stmt3 = $conn->prepare("UPDATE bookings SET staff_id = NULL WHERE staff_id = ?");
     if ($stmt3) {
