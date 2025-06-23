@@ -1,8 +1,8 @@
 <?php
+session_start();
 include 'session_check.php';
+include 'db_connection.php';
 checkStaffSession();
-
-require_once 'db_connection.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

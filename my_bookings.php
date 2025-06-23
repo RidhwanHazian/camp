@@ -1,16 +1,9 @@
 <?php
 
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-require_once 'confg.php';
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
+session_start();
+include 'db_connection.php';
+include 'session_check.php';
+checkCustomerSession();
 
 
 // Get all bookings for the user

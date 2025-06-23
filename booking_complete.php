@@ -1,8 +1,8 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkCustomerSession();
-
-require_once 'db_connection.php';
 
 // Check if booking data is posted, otherwise redirect
 if (!isset($_POST['package']) || empty($_POST['package'])) {

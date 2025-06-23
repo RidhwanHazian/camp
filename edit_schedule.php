@@ -1,6 +1,8 @@
 <?php
 session_start();
-require_once 'db_connection.php';
+include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 
 // Only allow admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {

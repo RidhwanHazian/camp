@@ -1,8 +1,10 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkAdminSession();
 
-require_once 'db_connection.php'; // Connect to your DB
+ // Connect to your DB
 
 // Fetch staff list
 $staffResult = $conn->query("SELECT staff_id, staff_name FROM staff");

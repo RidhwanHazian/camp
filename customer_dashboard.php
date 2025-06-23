@@ -1,11 +1,8 @@
 <?php
 session_start();
-
-// Check if user is logged in and is a customer
-if (!isset($_SESSION['customer_id']) || $_SESSION['role'] !== 'customer') {
-    header("Location: login.php");
-    exit();
-}
+include 'db_connection.php';
+include 'session_check.php';
+checkCustomerSession();
 ?>
 <!DOCTYPE html>
 <html lang="en">

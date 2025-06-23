@@ -1,8 +1,8 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "camp");
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
+session_start();
+include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 
 $schedule_query = "SELECT 
     s.staff_name, 
@@ -276,6 +276,7 @@ $schedule_result = $conn->query($schedule_query);
     <table>
       <thead>
         <tr>
+          <th>Booking ID</th>
           <th>Staff Name</th>
           <th>Date Start</th>
           <th>Date End</th>
@@ -289,6 +290,7 @@ $schedule_result = $conn->query($schedule_query);
       if ($schedule_result && $schedule_result->num_rows > 0) {
         while ($row = $schedule_result->fetch_assoc()) {
           echo "<tr>
+            <td>" . htmlspecialchars($row['booking_id']) . "</td>
             <td>" . htmlspecialchars($row['staff_name']) . "</td>
             <td>" . htmlspecialchars($row['arrival_date']) . "</td>
             <td>" . htmlspecialchars($row['departure_date']) . "</td>

@@ -1,8 +1,8 @@
 <?php
+session_start();
 include 'session_check.php';
-checkStaffSession();
-
 include 'db_connection.php';
+checkStaffSession();
 
 $staff_id = $_SESSION['staff_id']; // Use staff_id from session
 $staff_name = '';
