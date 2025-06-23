@@ -1,8 +1,8 @@
 <?php
-session_start();
-include 'db_connection.php';
 include 'session_check.php';
 checkStaffSession();
+
+require_once 'db_connection.php';
 
 // Handle payment verification
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
@@ -19,17 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
             SET payment_details = JSON_OBJECT(
                 'verified_by', ?,
                 'verified_date', NOW(),
-                'status', 'verified',
+                'status', ?,
                 'verification_notes', 'Payment confirmed by staff'
             )
             WHERE payment_id = ? AND booking_id = ?
         ");
         $staff_id_for_verification = $_SESSION['staff_id'];
-        $update_payment->bind_param("sii", $staff_id_for_verification, $payment_id, $booking_id);
+        $new_status = $status_note ? $status_note : 'confirmed';
+        $update_payment->bind_param("ssii", $staff_id_for_verification, $new_status, $payment_id, $booking_id);
         $update_payment->execute();
 
         // Update booking status to note or 'confirmed'
-        $new_status = $status_note ? $status_note : 'confirmed';
         $update_booking_status = $conn->prepare("UPDATE bookings SET status = ? WHERE booking_id = ?");
         $update_booking_status->bind_param("si", $new_status, $booking_id);
         $update_booking_status->execute();
@@ -58,6 +58,7 @@ try {
             b.total_price,
             b.arrival_date,
             b.departure_date,
+            b.status,
             p.package_name,
             py.payment_id,
             py.amount as paid_amount,
@@ -327,6 +328,41 @@ try {
         .receipt-link:hover {
             text-decoration: underline;
         }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 1em;
+            font-weight: 600;
+            border-radius: 16px;
+            padding: 7px 18px;
+            margin-top: 6px;
+            box-shadow: 0 2px 8px rgba(80,80,160,0.08);
+            background: linear-gradient(90deg, #f8fafc 60%, #e0e7ff 100%);
+            color: #444;
+            letter-spacing: 0.5px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .status-badge.status-complete {
+            background: linear-gradient(90deg, #e0ffe7 60%, #d4fcf7 100%);
+            color: #219150;
+            border: 1.5px solid #27ae60;
+        }
+        .status-badge.status-paid {
+            background: linear-gradient(90deg, #e0f7fa 60%, #e0e7ff 100%);
+            color: #00796b;
+            border: 1.5px solid #00bfae;
+        }
+        .status-badge.status-pending {
+            background: linear-gradient(90deg, #fffbe0 60%, #ffeaa7 100%);
+            color: #bfa600;
+            border: 1.5px solid #f39c12;
+        }
+        .status-badge.status-not\ complete {
+            background: linear-gradient(90deg, #ffe0e0 60%, #ffe7e7 100%);
+            color: #c0392b;
+            border: 1.5px solid #e74c3c;
+        }
   </style>
 </head>
 <body>
@@ -382,6 +418,7 @@ try {
                         <th>Package & Amount</th>
                         <th>Booking Date</th>
                         <th>Payment Status</th>
+                        <th style="text-align:center;">Current Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -465,6 +502,26 @@ try {
                                     </button>
                                 </form>
                             </div>
+                        </td>
+                        <td style="text-align:center; vertical-align:middle;">
+                            <span class="status-badge status-<?php echo htmlspecialchars($booking['status']); ?>">
+                                <?php 
+                                    switch($booking['status']) {
+                                        case 'complete':
+                                            echo '<i class="fas fa-check-circle"></i> Complete';
+                                            break;
+                                        case 'paid':
+                                            echo '<i class="fas fa-money-bill-wave"></i> Paid';
+                                            break;
+                                        case 'not complete':
+                                            echo '<i class="fas fa-exclamation-circle"></i> Not Complete';
+                                            break;
+                                        case 'pending':
+                                        default:
+                                            echo '<i class="fas fa-hourglass-half"></i> Pending';
+                                    }
+                                ?>
+                            </span>
                         </td>
                     </tr>
                     <?php endforeach; ?>
