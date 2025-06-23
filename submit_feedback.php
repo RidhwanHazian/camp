@@ -1,41 +1,39 @@
 <?php
 session_start();
-require_once 'confg.php';
-
-header('Content-Type: application/json');
+require_once 'db_connection.php';
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Please login first']);
+if (!isset($_SESSION['customer_id'])) {
+    header('Location: feedback.php?error=Please login first');
     exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
         // Get form data
-        $user_id = $_SESSION['user_id'];
+        $user_id = $_SESSION['customer_id'];
         $package_id = isset($_POST['package_id']) ? (int)$_POST['package_id'] : null;
         $rating = isset($_POST['rating']) ? (int)$_POST['rating'] : null;
         $comment = isset($_POST['feedback']) ? trim($_POST['feedback']) : '';
 
         // Validate inputs
         if (!$package_id) {
-            echo json_encode(['status' => 'error', 'message' => 'Please select a package']);
+            header('Location: feedback.php?error=Please select a package');
             exit();
         }
 
         if (!$rating || $rating < 1 || $rating > 5) {
-            echo json_encode(['status' => 'error', 'message' => 'Please provide a valid rating']);
+            header('Location: feedback.php?error=Please provide a valid rating');
             exit();
         }
 
         if (empty($comment)) {
-            echo json_encode(['status' => 'error', 'message' => 'Please provide feedback comment']);
+            header('Location: feedback.php?error=Please provide feedback comment');
             exit();
         }
 
         // Start transaction
-        $conn->beginTransaction();
+        $conn->begin_transaction();
 
         // Get the booking_id
         $stmt = $conn->prepare("
@@ -45,8 +43,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ORDER BY booking_id DESC 
             LIMIT 1
         ");
-        $stmt->execute([$user_id, $package_id]);
-        $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->bind_param("ii", $user_id, $package_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $booking = $result->fetch_assoc();
 
         if (!$booking) {
             throw new Exception("No valid booking found for this package");
@@ -107,8 +107,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 video_path
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
-
-        $result = $stmt->execute([
+        $stmt->bind_param(
+            "iiissss",
             $booking_id,
             $user_id,
             $package_id,
@@ -116,7 +116,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $comment,
             $photo_path,
             $video_path
-        ]);
+        );
+        $result = $stmt->execute();
 
         if (!$result) {
             throw new Exception("Failed to insert feedback");
@@ -125,15 +126,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Commit transaction
         $conn->commit();
 
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Thank you for your feedback! Your opinion helps us improve our services. 🌟'
-        ]);
+        header('Location: feedback.php?success=Thank you for your feedback! Your opinion helps us improve our services. 🌟');
+        exit();
 
     } catch (Exception $e) {
         // Rollback transaction
-        if ($conn->inTransaction()) {
-            $conn->rollBack();
+        if ($conn->in_transaction) {
+            $conn->rollback();
         }
 
         // Delete uploaded files if they exist
@@ -147,15 +146,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Log error
         error_log("Feedback Error: " . $e->getMessage());
         
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Error submitting feedback: ' . $e->getMessage()
-        ]);
+        header('Location: feedback.php?error=Error submitting feedback: ' . $e->getMessage());
+        exit();
     }
 } else {
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Invalid request method'
-    ]);
+    header('Location: feedback.php?error=Invalid request method');
+    exit();
 }
 ?>
