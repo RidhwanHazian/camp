@@ -1,11 +1,16 @@
 <?php
-session_start();
+session_start(); // Start the session to use $_SESSION messages
 include 'db_connection.php';
-include 'session_check.php';
-checkAdminSession();
+
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Debug: Log the POST data
+error_log("POST data: " . print_r($_POST, true));
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    $_SESSION['error'] = "Invalid package ID provided.";
+    $_SESSION['error'] = "Invalid campsite ID provided.";
     header('Location: manage_campsites.php');
     exit();
 }
