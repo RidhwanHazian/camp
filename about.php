@@ -102,11 +102,13 @@ if ($count_row = $count_result->fetch_assoc()) {
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(40,167,69,0.13);
-            transition: background 0.2s, transform 0.2s;
+            transition: background 0.2s, transform 0.2s, text-decoration 0.2s;
+            text-decoration: none;
         }
         .hero .cta-btn:hover {
             background: #218838;
             transform: translateY(-2px) scale(1.04);
+            text-decoration: underline;
         }
         .about-section, .main-bg, .hero, .features-row, .team-section {
             position: relative;
@@ -884,6 +886,38 @@ if ($count_row = $count_result->fetch_assoc()) {
             color: #1a73e8 !important;
             border: 1px solid #b3d1ff !important;
         }
+        .scroll-down-guide {
+            position: absolute;
+            left: 50%;
+            bottom: 40px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            animation: fadeInUp 1.2s;
+        }
+        .scroll-down-guide .arrow {
+            width: 32px;
+            height: 32px;
+            border-left: 4px solid #fff;
+            border-bottom: 4px solid #fff;
+            transform: rotate(-45deg);
+            margin-top: 0;
+            animation: bounce 1.5s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(-45deg);}
+            50% { transform: translateY(12px) rotate(-45deg);}
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .hero {
+            position: relative; /* Ensure .scroll-down-guide is positioned relative to .hero */
+        }
     </style>
 </head>
 <body>
@@ -901,6 +935,9 @@ if ($count_row = $count_result->fetch_assoc()) {
         <p>We are passionate about creating unforgettable outdoor experiences.</p>
         <p>Our mission is to connect people with nature, foster community, and inspire adventure in the heart of Malaysia's beautiful landscapes.</p>
         <a href="campsites.php" class="cta-btn">Explore Our Campsites</a>
+        <div class="scroll-down-guide" onclick="scrollToAboutSection()">
+            <div class="arrow"></div>
+        </div>
     </div>
     <div class="our-story-section" id="about-section">
         <div class="our-story-img-card">
@@ -983,22 +1020,22 @@ if ($count_row = $count_result->fetch_assoc()) {
         <h2>Meet Our Team</h2>
         <div class="team-row">
             <div class="team-card">
-                <div class="team-avatar"><img src="path/to/your_image1.jpg" alt="Team Member 1"></div>
+                <div class="team-avatar"><img src="teams/syahidah.jpg" alt="Team Member 1"></div>
                 <h4>Siti Nur Syahidah</h4>
                 <p>Founder and Camp Director</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><img src="path/to/your_image2.jpg" alt="Team Member 2"></div>
+                <div class="team-avatar"><img src="teams/siti aisyah.jpg" alt="Team Member 2"></div>
                 <h4>Siti Aisyah</h4>
                 <p>Adventure Coordinator</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><img src="lutfiah.jpg" alt="Team Member 3"></div>
+                <div class="team-avatar"><img src="teams/lutfiah.jpg" alt="Team Member 3"></div>
                 <h4>Lutfiah Qistina</h4>
                 <p>Safety and Wellness Lead</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><img src="path/to/your_image4.jpg" alt="Team Member 4"></div>
+                <div class="team-avatar"><img src="teams/ridhwan.jpg" alt="Team Member 4"></div>
                 <h4>Muhammad Ridhwan</h4>
                 <p>Community Manager</p>
             </div>
@@ -1042,6 +1079,9 @@ if ($count_row = $count_result->fetch_assoc()) {
             .openPopup();
     }
     window.onload = initMap;
+    function scrollToAboutSection() {
+        document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' });
+    }
     </script>
 </body>
 </html>
