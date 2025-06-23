@@ -1,19 +1,13 @@
 <?php
-session_start();                    // Start session after enabling error reporting
-include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession(); 
+$conn = new mysqli("localhost", "root", "", "camp");
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
+}
 
 $schedule_query = "SELECT 
-    s.staff_name,
-    t.task_id,
-    t.task_date,
-    t.task_shiftTime as shift_time,
-    t.task_location as location,
-    t.task_activity as task_description
-FROM task_assignment t 
-JOIN staff s ON t.staff_id = s.staff_id
-ORDER BY t.task_date DESC";
+    s.staff_name, 
+    b.arrival_date, 
+    b.departure_date, b.full_name AS customer_name, b.status, b.booking_id FROM bookings b JOIN staff s ON b.staff_id = s.staff_id ORDER BY b.arrival_date DESC";
 $schedule_result = $conn->query($schedule_query);
 ?>
 
@@ -219,6 +213,7 @@ $schedule_result = $conn->query($schedule_query);
 
 <div class="content">
   <h1>Manage Staff</h1>
+  
 
   <!-- Staff Section -->
   <div id="staff-section" class="section-header">
@@ -282,10 +277,10 @@ $schedule_result = $conn->query($schedule_query);
       <thead>
         <tr>
           <th>Staff Name</th>
-          <th>Date</th>
-          <th>Shift Time</th>
-          <th>Location</th>
-          <th>Task Description</th>
+          <th>Date Start</th>
+          <th>Date End</th>
+          <th>Customer</th>
+          <th>Payment Status</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -295,13 +290,13 @@ $schedule_result = $conn->query($schedule_query);
         while ($row = $schedule_result->fetch_assoc()) {
           echo "<tr>
             <td>" . htmlspecialchars($row['staff_name']) . "</td>
-            <td>" . htmlspecialchars($row['task_date']) . "</td>
-            <td>" . htmlspecialchars($row['shift_time']) . "</td>
-            <td>" . htmlspecialchars($row['location']) . "</td>
-            <td>" . htmlspecialchars($row['task_description']) . "</td>
+            <td>" . htmlspecialchars($row['arrival_date']) . "</td>
+            <td>" . htmlspecialchars($row['departure_date']) . "</td>
+            <td>" . htmlspecialchars($row['customer_name']) . "</td>
+            <td>" . htmlspecialchars($row['status']) . "</td>
             <td class='action-buttons'>
-              <a href='edit_schedule.php?id=" . $row['task_id'] . "'>Edit</a>
-              <a href='delete_schedule.php?id=" . $row['task_id'] . "' onclick='return confirm(\"Are you sure you want to delete this schedule?\");'>Delete</a>
+              <a href='edit_schedule.php?id=" . $row['booking_id'] . "'>Edit</a>
+              <a href='delete_schedule.php?id=" . $row['booking_id'] . "' onclick='return confirm(\"Are you sure you want to delete this schedule?\");'>Delete</a>
             </td>
           </tr>";
         }
@@ -333,7 +328,7 @@ $schedule_result = $conn->query($schedule_query);
       </thead>
       <tbody>
         <?php
-        $assignment_sql = "SELECT sf.staff_id, s.staff_name, f.facility_name
+        $assignment_sql = "SELECT sf.staff_id, s.staff_name, f.facility_name, sf.status
                           FROM staff_facilities sf
                           JOIN staff s ON sf.staff_id = s.staff_id
                           JOIN facilities f ON sf.facility_id = f.facility_id";
@@ -348,10 +343,10 @@ $schedule_result = $conn->query($schedule_query);
                       <a href='edit_assign_facilities.php?staff_id=" . $row['staff_id'] . "&facility_name=" . urlencode($row['facility_name']) . "'>Edit</a>
                       <a href='delete_assign_facilities.php?staff_id=" . $row['staff_id'] . "&facility_name=" . urlencode($row['facility_name']) . "' onclick='return confirm(\"Are you sure you want to delete this assignment?\");'>Delete</a>
                     </td>
-                  </tr>";
+                    <td>" . ($row['status'] === 'done' ? "<span style='color:#27ae60;font-weight:bold;'>Complete</span>" : "<span style='color:#c0392b;font-weight:bold;'>Pending</span>") . "</td>\n                </tr>";
           }
         } else {
-          echo "<tr><td colspan='3' style='text-align:center; color:#aaa;'>No facility assignments yet.</td></tr>";
+          echo "<tr><td colspan='4' style='text-align:center; color:#aaa;'>No facility assignments yet.</td></tr>";
         }
         ?>
       </tbody>
