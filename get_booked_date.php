@@ -1,5 +1,5 @@
 <?php
-require_once 'confg.php';
+require_once 'db_connection.php';
 
 header('Content-Type: application/json');
 
