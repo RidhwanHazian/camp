@@ -292,14 +292,14 @@ $packages_result = mysqli_query($conn, $packages_sql);
                     <span>Select dates</span>
                     <span id="dates-display"></span>
                 </div>
-      </div>
+            </div>
             <div class="select-box" id="guest-selector">
                 <i class="fas fa-user-friends"></i>
                 <div>
                     <span>Select Adult and Kids</span>
                     <span id="guests-display"></span>
-      </div>
-      </div>
+                </div>
+            </div>
         </div>
 
         <div class="booking-body-content">
@@ -307,10 +307,19 @@ $packages_result = mysqli_query($conn, $packages_sql);
                 <div class="packages-container" id="packages-container">
                     <?php if ($packages_result && mysqli_num_rows($packages_result) > 0): ?>
                         <?php while ($package = mysqli_fetch_assoc($packages_result)): ?>
-                            <div class="package-card" data-package-id="<?php echo htmlspecialchars($package['package_id']); ?>" data-package-name="<?php echo htmlspecialchars($package['package_name']); ?>" data-adult-price="<?php echo htmlspecialchars($package['adult_price']); ?>" data-child-price="<?php echo htmlspecialchars($package['child_price']); ?>">
+                            <div class="package-card"
+                                 data-package-id="<?php echo htmlspecialchars($package['package_id']); ?>"
+                                 data-package-name="<?php echo htmlspecialchars($package['package_name']); ?>"
+                                 data-adult-price="<?php echo htmlspecialchars($package['adult_price']); ?>"
+                                 data-child-price="<?php echo htmlspecialchars($package['child_price']); ?>"
+                                 data-duration="<?php echo htmlspecialchars($package['duration']); ?>">
                                 <h2 class="package-title-main"><?php echo htmlspecialchars($package['package_name']); ?></h2>
                                 <div class="package-content-wrapper">
-                                     <img src="<?php echo htmlspecialchars($package['photo']); ?>" alt="<?php echo htmlspecialchars($package['package_name']); ?>" class="package-image">
+                                     <?php if (!empty($package['photo']) && file_exists('Assets/' . $package['photo'])): ?>
+                                        <img src="Assets/<?php echo htmlspecialchars($package['photo']); ?>" alt="<?php echo htmlspecialchars($package['package_name']); ?>" class="package-image">
+                                    <?php else: ?>
+                                        <img src="default_package.png" alt="No image" class="package-image">
+                                    <?php endif; ?>
                                      <div class="package-details">
                                          <p><?php echo htmlspecialchars($package['description']); ?></p>
                                          <div>
@@ -359,11 +368,15 @@ $packages_result = mysqli_query($conn, $packages_sql);
                         <p>Please select a package</p>
                     </div>
                     <button type="submit" id="bookBtn" class="book-button" disabled>BOOK</button>
-      </div>
-        </div>
+                    <div id="duration-warning" style="display:none; max-width: 500px; margin: 18px auto 0 auto; padding: 14px 18px; border-radius: 14px; background: #fff6e9; color: #c0392b; font-weight: 500; text-align: center; box-shadow: 0 2px 8px rgba(255, 183, 77, 0.13); font-size: 1.08em; position: relative;">
+                      <span id="duration-warning-icon" style="font-size:1.5em; vertical-align:middle; margin-right:8px;">🐻</span>
+                      <span id="duration-warning-text"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
-  </div>
+</div>
 
 <!-- Date Picker Modal -->
 <div id="dateModal" class="modal">
@@ -428,11 +441,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryPackageDetailsEl = document.getElementById('summary-package-details');
 
     // --- State Check ---
+    function getDaysFromDuration(duration) {
+        // Extract the number before 'D' (e.g., 3D2N -> 3)
+        const match = duration.match(/(\d+)D/);
+        return match ? parseInt(match[1]) : 1;
+    }
+
+    // Store package durations for validation
+    const packageDurations = {};
+    document.querySelectorAll('.package-card').forEach(card => {
+        const packageId = card.dataset.packageId;
+        const durationText = card.dataset.duration;
+        packageDurations[packageId] = getDaysFromDuration(durationText);
+    });
+
     function checkAllSelections() {
         const packageSelected = hiddenPackageId.value !== '';
         const datesSelected = arriveDateInput.value !== '' && departDateInput.value !== '';
         const guestsSelected = adultsInput.value !== '';
-        if (packageSelected && datesSelected && guestsSelected) {
+        let validDuration = true;
+        let warningMsg = '';
+        if (packageSelected && datesSelected) {
+            const requiredDays = packageDurations[hiddenPackageId.value];
+            const date1 = new Date(arriveDateInput.value);
+            const date2 = new Date(departDateInput.value);
+            const selectedDays = Math.ceil((date2 - date1) / (1000 * 3600 * 24)) + 1;
+            if (selectedDays !== requiredDays) {
+                validDuration = false;
+                warningMsg = `The selected package requires ${requiredDays} day(s). Please select the correct dates.`;
+            }
+        }
+        const durationWarningBox = document.getElementById('duration-warning');
+        const durationWarningText = document.getElementById('duration-warning-text');
+        if (warningMsg) {
+            durationWarningText.textContent = warningMsg;
+            durationWarningBox.style.display = '';
+        } else {
+            durationWarningBox.style.display = 'none';
+        }
+        if (packageSelected && datesSelected && guestsSelected && validDuration) {
             bookBtn.disabled = false;
             bookBtn.classList.add('enabled');
         } else {
@@ -532,6 +579,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('bookingForm').addEventListener('submit', function(e) {
         if (bookBtn.disabled) {
             e.preventDefault();
+            const packageSelected = hiddenPackageId.value !== '';
+            const datesSelected = arriveDateInput.value !== '' && departDateInput.value !== '';
+            if (packageSelected && datesSelected) {
+                const requiredDays = packageDurations[hiddenPackageId.value];
+                const date1 = new Date(arriveDateInput.value);
+                const date2 = new Date(departDateInput.value);
+                const selectedDays = Math.ceil((date2 - date1) / (1000 * 3600 * 24)) + 1;
+                if (selectedDays !== requiredDays) {
+                    alert(`The selected package requires ${requiredDays} day(s). Please select the correct dates.`);
+                    return;
+                }
+            }
             alert('Please select a package, date, and number of guests before booking.');
         }
     });
