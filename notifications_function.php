@@ -1,5 +1,5 @@
 <?php
-require_once 'confg.php';
+require_once 'db_connection.php';
 
 /**
  * Add a basic notification
@@ -84,30 +84,27 @@ function getUnreadCount($user_id) {
  */
 function createBookingNotification($user_id, $booking_id) {
     global $conn;
-    try {
-        // Get booking details
-        $stmt = $conn->prepare("
-            SELECT b.*, p.package_name 
-            FROM bookings b 
-            JOIN packages p ON b.package_id = p.package_id 
-            WHERE b.booking_id = ?
-        ");
-        $stmt->execute([$booking_id]);
-        $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare("
+        SELECT b.*, p.package_name 
+        FROM bookings b 
+        JOIN packages p ON b.package_id = p.package_id 
+        WHERE b.booking_id = ?
+    ");
+    $stmt->bind_param("i", $booking_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $booking = $result->fetch_assoc();
 
-        if ($booking) {
-            $title = "Booking Confirmation";
-            $message = "Your booking for {$booking['package_name']} has been received. " .
-                      "Arrival: {$booking['arrival_date']}, Departure: {$booking['departure_date']}. " .
-                      "Total amount: RM{$booking['total_price']}";
-            $icon = "fa-check-circle"; // Font Awesome icon
+    if ($booking) {
+        $title = "Booking Confirmation";
+        $message = "Your booking for {$booking['package_name']} has been received. " .
+                  "Arrival: {$booking['arrival_date']}, Departure: {$booking['departure_date']}. " .
+                  "Total amount: RM{$booking['total_price']}";
+        $icon = "fa-check-circle"; // Font Awesome icon
 
-            return addNotification($user_id, $title, $message, 'success', $icon);
-        }
-    } catch(PDOException $e) {
-        error_log("Notification Error: " . $e->getMessage());
-        return false;
+        return addNotification($user_id, $title, $message, 'success', $icon);
     }
+    return false;
 }
 
 /**
@@ -132,43 +129,36 @@ function createPaymentNotification($user_id, $amount) {
  */
 function createReminderNotification($user_id, $booking_id) {
     global $conn;
-    try {
-        // Get booking details
-        $stmt = $conn->prepare("
-            SELECT b.*, p.package_name 
-            FROM bookings b 
-            JOIN packages p ON b.package_id = p.package_id 
-            WHERE b.booking_id = ?
-        ");
-        $stmt->execute([$booking_id]);
-        $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare("
+        SELECT b.*, p.package_name 
+        FROM bookings b 
+        JOIN packages p ON b.package_id = p.package_id 
+        WHERE b.booking_id = ?
+    ");
+    $stmt->bind_param("i", $booking_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $booking = $result->fetch_assoc();
 
-        if ($booking) {
-            $arrival = new DateTime($booking['arrival_date']);
-            $today = new DateTime();
-            $days_until = $today->diff($arrival)->days;
-            
-            // Create appropriate message based on timing
-            if ($days_until == 0) {
-                $title = "Your camp starts today!";
-                $message = "Get ready for your {$booking['package_name']} adventure! Don't forget your essentials!";
-            } else if ($days_until == 1) {
-                $title = "Your camp starts tomorrow!";
-                $message = "Time to pack for your {$booking['package_name']} camp! Check your camping essentials list.";
-            } else {
-                $title = "Upcoming Camp Reminder";
-                $message = "Your {$booking['package_name']} camp starts in {$days_until} days on {$booking['arrival_date']}. " .
-                          "Start preparing your camping gear!";
-            }
-            
-            $icon = "fa-bell"; // Font Awesome icon
-
-            return addNotification($user_id, $title, $message, 'reminder', $icon);
+    if ($booking) {
+        $arrival = new DateTime($booking['arrival_date']);
+        $today = new DateTime();
+        $days_until = $today->diff($arrival)->days;
+        if ($days_until == 0) {
+            $title = "Your camp starts today!";
+            $message = "Get ready for your {$booking['package_name']} adventure! Don't forget your essentials!";
+        } else if ($days_until == 1) {
+            $title = "Your camp starts tomorrow!";
+            $message = "Time to pack for your {$booking['package_name']} camp! Check your camping essentials list.";
+        } else {
+            $title = "Upcoming Camp Reminder";
+            $message = "Your {$booking['package_name']} camp starts in {$days_until} days on {$booking['arrival_date']}. " .
+                      "Start preparing your camping gear!";
         }
-    } catch(PDOException $e) {
-        error_log("Notification Error: " . $e->getMessage());
-        return false;
+        $icon = "fa-bell";
+        return addNotification($user_id, $title, $message, 'reminder', $icon);
     }
+    return false;
 }
 
 /**
@@ -176,28 +166,24 @@ function createReminderNotification($user_id, $booking_id) {
  */
 function createFeedbackRequestNotification($user_id, $booking_id) {
     global $conn;
-    try {
-        // Get booking details
-        $stmt = $conn->prepare("
-            SELECT b.*, p.package_name 
-            FROM bookings b 
-            JOIN packages p ON b.package_id = p.package_id 
-            WHERE b.booking_id = ?
-        ");
-        $stmt->execute([$booking_id]);
-        $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $conn->prepare("
+        SELECT b.*, p.package_name 
+        FROM bookings b 
+        JOIN packages p ON b.package_id = p.package_id 
+        WHERE b.booking_id = ?
+    ");
+    $stmt->bind_param("i", $booking_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $booking = $result->fetch_assoc();
 
-        if ($booking) {
-            $title = "Share Your Experience";
-            $message = "How was your {$booking['package_name']} experience? " .
-                      "Please take a moment to share your feedback and help us improve!";
-            $icon = "fa-star"; // Font Awesome icon
-
-            return addNotification($user_id, $title, $message, 'feedback', $icon);
-        }
-    } catch(PDOException $e) {
-        error_log("Notification Error: " . $e->getMessage());
-        return false;
+    if ($booking) {
+        $title = "Share Your Experience";
+        $message = "How was your {$booking['package_name']} experience? " .
+                  "Please take a moment to share your feedback and help us improve!";
+        $icon = "fa-star";
+        return addNotification($user_id, $title, $message, 'feedback', $icon);
     }
+    return false;
 }
 ?>
