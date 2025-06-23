@@ -1,8 +1,7 @@
 <?php
-session_start();                    // Start session after enabling error reporting
+include 'session_check.php';
+checkAdminSession();
 include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession(); 
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     $_SESSION['error'] = "Invalid staff ID provided.";
