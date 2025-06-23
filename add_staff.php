@@ -1,8 +1,7 @@
 <?php
-session_start();                    // Start session after enabling error reporting
+include 'session_check.php';
+checkAdminSession(); // Only admins can add staff
 include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession();
 ?>
 <!DOCTYPE html>
 <html lang="en">
