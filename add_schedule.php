@@ -1,8 +1,8 @@
 <?php
-session_start();                    // Start session after enabling error reporting
-include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
+include 'session_check.php';
 checkAdminSession();
+
+require_once 'db_connection.php'; // Connect to your DB
 
 // Fetch staff list
 $staffResult = $conn->query("SELECT staff_id, staff_name FROM staff");
@@ -101,7 +101,8 @@ if (isset($_GET['success'])) {
     echo "<script>alert('Schedule added successfully!');</script>";
 }
 if (isset($_GET['error'])) {
-    echo "<script>alert('Failed to add schedule.');</script>";
+    $msg = htmlspecialchars($_GET['error']);
+    echo "<script>alert('$msg');</script>";
 }
 ?>
 
