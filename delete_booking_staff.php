@@ -6,7 +6,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
     exit();
 }
 
-require_once 'confg.php';
+require_once 'db_connection.php';
 
 try {
     $id = $_POST['id'] ?? '';
