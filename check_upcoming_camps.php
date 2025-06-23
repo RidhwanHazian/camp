@@ -1,5 +1,5 @@
 <?php
-require_once 'confg.php';
+require_once 'db_connection.php';
 require_once 'notifications_function.php';
 
 // Get all upcoming confirmed bookings
