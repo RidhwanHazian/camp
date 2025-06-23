@@ -19,12 +19,6 @@ $stmt->execute();
 $result = $stmt->get_result();
 $existing_payment = $result->fetch_assoc();
 
-if ($existing_payment) {
-    // Payment already exists, redirect to success page
-    header("Location: payment_success.php?booking_id=" . $booking_id);
-    exit();
-}
-
 // Get booking details
 $stmt = $conn->prepare("
     SELECT b.*, p.package_name, p.description, p.duration,
@@ -33,7 +27,7 @@ $stmt = $conn->prepare("
     FROM bookings b 
     LEFT JOIN packages p ON b.package_id = p.package_id 
     LEFT JOIN package_prices pp ON p.package_id = pp.package_id
-    WHERE b.booking_id = ? AND b.user_id = ? AND b.status != 'paid'
+    WHERE b.booking_id = ? AND b.user_id = ?
 ");
 $stmt->bind_param("ii", $booking_id, $_SESSION['customer_id']);
 $stmt->execute();
@@ -41,15 +35,19 @@ $result = $stmt->get_result();
 $booking = $result->fetch_assoc();
 
 if (!$booking) {
-    // Either booking doesn't exist, doesn't belong to user, or is already paid
+    // Either booking doesn't exist, doesn't belong to user
     header("Location: my_bookings.php");
     exit();
 }
 
-// Calculate total price
-$adult_total = $booking['package_price'] * $booking['num_adults'];
-$child_total = $booking['child_price'] * $booking['num_children'];
-$total_price = $adult_total + $child_total;
+// Only redirect to payment_success if booking is fully paid/confirmed
+if ($booking['status'] == 'paid' || $booking['status'] == 'complete' || $booking['status'] == 'confirmed') {
+    header("Location: payment_success.php?booking_id=" . $booking_id);
+    exit();
+}
+
+// Use the total_price from the booking record instead of recalculating
+$total_price = $booking['total_price'];
 
 // Check if this is preview mode (no booking_id)
 $preview_mode = !isset($_GET['booking_id']);
@@ -65,11 +63,27 @@ if ($preview_mode) {
     $total_price = 199.00;
 }
 
+// Calculate outstanding amount if status is 'not complete' or 'pending'
+$outstanding_amount = null;
+if ($booking['status'] == 'not complete') {
+    $sum_stmt = $conn->prepare("SELECT SUM(amount) as total_paid FROM payments WHERE booking_id = ?");
+    $sum_stmt->bind_param("i", $booking_id);
+    $sum_stmt->execute();
+    $sum_result = $sum_stmt->get_result();
+    $total_paid = 0;
+    if ($sum_row = $sum_result->fetch_assoc()) {
+        $total_paid = floatval($sum_row['total_paid']);
+    }
+    $outstanding_amount = floatval($booking['total_price']) - $total_paid;
+    if ($outstanding_amount < 0) $outstanding_amount = 0;
+} else if ($booking['status'] == 'pending') {
+    $outstanding_amount = floatval($booking['total_price']);
+}
+
 // Only process POST if not in preview mode
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !$preview_mode) {
     $payment_method = $_POST['payment_method'];
 
-        
     // Get payment details based on method
     $payment_details = [];
     if ($payment_method === 'card') {
@@ -88,51 +102,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$preview_mode) {
     // Convert payment details to JSON for storage
     $payment_details_json = json_encode($payment_details);
 
+    // Prevent payment if outstanding_amount is zero or less
+    if ($outstanding_amount <= 0) {
+        $error = "No outstanding amount to pay.";
+    } else {
+        try {
+            // Begin transaction
+            $conn->begin_transaction();
 
-    try {
-        // Begin transaction
-        $conn->begin_transaction();
+            if ($existing_payment) {
+                // Update existing payment: add to amount, update date/details
+                $stmt = $conn->prepare("
+                    UPDATE payments 
+                    SET amount = amount + ?, payment_method = ?, payment_details = ?, payment_date = NOW() 
+                    WHERE booking_id = ?
+                ");
+                $stmt->bind_param("dssi", $outstanding_amount, $payment_method, $payment_details_json, $booking_id);
+                $stmt->execute();
+            } else {
+                // Insert new payment record
+                $stmt = $conn->prepare("
+                    INSERT INTO payments (booking_id, amount, payment_method, payment_details, payment_date) 
+                    VALUES (?, ?, ?, ?, NOW())
+                ");
+                $stmt->bind_param("idss", $booking_id, $outstanding_amount, $payment_method, $payment_details_json);
+                $stmt->execute();
+            }
 
-        // Double check no payment exists (race condition prevention)
-        $stmt = $conn->prepare("SELECT payment_id FROM payments WHERE booking_id = ? FOR UPDATE");
-        $stmt->bind_param("i", $booking_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->fetch_assoc()) {
-            $conn->rollback();
+            // Update booking status
+            $stmt = $conn->prepare("UPDATE bookings SET status = 'paid' WHERE booking_id = ? AND status != 'paid'");
+            $stmt->bind_param("i", $booking_id);
+            $stmt->execute();
+
+            // Check if booking was actually updated (another safety check)
+            if ($stmt->affected_rows === 0) {
+                // Booking was already paid or doesn't exist
+                $conn->rollback();
+                header("Location: my_bookings.php");
+                exit();
+            }
+
+            $conn->commit();
+            
+            // Redirect to success page
             header("Location: payment_success.php?booking_id=" . $booking_id);
             exit();
-        }
-
-        // Insert payment record
-        $stmt = $conn->prepare("
-            INSERT INTO payments (booking_id, amount, payment_method, payment_details, payment_date) 
-            VALUES (?, ?, ?, ?, NOW())
-        ");
-        $stmt->bind_param("idss", $booking_id, $total_price, $payment_method, $payment_details_json);
-        $stmt->execute();
-
-        // Update booking status
-        $stmt = $conn->prepare("UPDATE bookings SET status = 'paid' WHERE booking_id = ? AND status != 'paid'");
-        $stmt->bind_param("i", $booking_id);
-        $stmt->execute();
-
-        // Check if booking was actually updated (another safety check)
-        if ($stmt->affected_rows === 0) {
-            // Booking was already paid or doesn't exist
+        } catch (Exception $e) {
             $conn->rollback();
-            header("Location: my_bookings.php");
-            exit();
+            $error = "Payment processing failed. Please try again. Error: " . $e->getMessage();
         }
-
-        $conn->commit();
-        
-        // Redirect to success page
-        header("Location: payment_success.php?booking_id=" . $booking_id);
-        exit();
-    } catch (Exception $e) {
-        $conn->rollback();
-        $error = "Payment processing failed. Please try again.";
     }
 }
 
@@ -354,13 +372,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$preview_mode) {
                 <span><?php echo $booking['duration']; ?> days</span>
             </div>
             <div class="summary-row">
-                <span>Price per person</span>
-                <span>RM<?php echo number_format($booking['package_price'], 2); ?></span>
+                <span>Adults</span>
+                <span><?php echo $booking['num_adults']; ?> × RM<?php echo number_format($booking['package_price'], 2); ?></span>
             </div>
+            <?php if ($booking['num_children'] > 0): ?>
+            <div class="summary-row">
+                <span>Children</span>
+                <span><?php echo $booking['num_children']; ?> × RM<?php echo number_format($booking['child_price'], 2); ?></span>
+            </div>
+            <?php endif; ?>
             <div class="summary-row">
                 <strong>Total Amount</strong>
                 <strong>RM<?php echo number_format($total_price, 2); ?></strong>
             </div>
+            <?php if ($outstanding_amount !== null && $outstanding_amount < $total_price): ?>
+            <div class="summary-row" style="color:#c0392b;font-weight:bold;">
+                <span>Outstanding Amount</span>
+                <span>RM<?php echo number_format($outstanding_amount, 2); ?></span>
+            </div>
+            <?php endif; ?>
         </div>
 
         <form method="POST" id="paymentForm">
@@ -380,6 +410,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !$preview_mode) {
                     <label for="card_name">Name on Card</label>
                     <input type="text" id="card_name" name="card_name" placeholder="Enter name as shown on card">
                 </div>
+
                 <div class="form-group">
                     <label for="card_number">Card Number</label>
                     <input type="text" id="card_number" name="card_number" placeholder="Enter card number" maxlength="16">
