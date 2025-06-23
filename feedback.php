@@ -50,82 +50,53 @@ while ($row = $result->fetch_assoc()) {
     <title>TasikBiruCamps - Feedback</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        * {
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #e9d5c0 0%, #bca48a 100%);
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-        }
-
-        .header-banner {
             position: relative;
-            height: 300px;
-            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
-                            url('https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow-x: hidden;
+        }
+        .feedback-main {
+            max-width: 600px;
+            margin: 60px auto 0 auto;
+            background: rgba(255,255,255,0.78);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(140,109,82,0.13), 0 2px 8px rgba(140,109,82,0.10);
+            padding: 2.5rem 2.5rem 1.5rem 2.5rem;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid #bca48a;
+            position: relative;
+            z-index: 2;
+        }
+        .camp-logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #8c6d52;
+            text-align: center;
+            margin-bottom: 0.2rem;
+            letter-spacing: 2px;
+        }
+        .feedback-title {
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+            color: #8c6d52;
+        }
+        .feedback-desc {
+            text-align: center;
+            color: #bca48a;
             margin-bottom: 2rem;
         }
-
-        .header-banner h1 {
-            color: white;
-            font-size: 4rem;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        .form-section {
+            margin-bottom: 2rem;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: -100px auto 40px;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .preview-notice {
-            grid-column: 1 / -1;
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            color: #856404;
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 500;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .feedback-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .feedback-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            color: #333;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
-        }
-
         .package-select {
             width: 100%;
             padding: 12px;
@@ -134,57 +105,57 @@ while ($row = $result->fetch_assoc()) {
             font-size: 1rem;
             color: #333;
             background: white;
-            margin-bottom: 2rem;
-            cursor: pointer;
-        }
-
-        .emoji-rating {
-            display: flex;
-            justify-content: space-between;
-            margin: 2rem 0;
-            padding: 0 1rem;
-        }
-
-        .emoji-rating input {
-            display: none;
-        }
-
-        .emoji-rating label {
-            cursor: pointer;
-            font-size: 2.5rem;
-            opacity: 0.5;
-            transition: all 0.2s ease;
-            filter: grayscale(100%);
-        }
-
-        .emoji-rating label:hover,
-        .emoji-rating input:checked + label {
-            opacity: 1;
-            transform: scale(1.2);
-            filter: grayscale(0%);
-        }
-
-        .media-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        .media-section h3 {
-            color: #333;
-            font-size: 1.2rem;
             margin-bottom: 1.5rem;
-            font-weight: 500;
+            cursor: pointer;
         }
-
-        .upload-area {
+        .star-rating {
             display: flex;
             justify-content: center;
-            gap: 4rem;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
         }
-
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+        .star-rating label {
+            font-size: 2.2rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating input[type="radio"]:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #f7b731;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            resize: none;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            background: #f8f9fa;
+        }
+        textarea::placeholder {
+            color: #999;
+        }
+        .media-section {
+            margin-bottom: 1.5rem;
+        }
+        .media-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .upload-area {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+        }
         .upload-box {
             display: flex;
             flex-direction: column;
@@ -193,36 +164,30 @@ while ($row = $result->fetch_assoc()) {
             cursor: pointer;
             padding: 1rem;
             border-radius: 8px;
-            transition: all 0.2s ease;
+            border: 1.5px dashed #bbb;
+            background: #fafbfc;
+            transition: border-color 0.2s, background 0.2s;
             color: #666;
+            min-width: 120px;
         }
-
         .upload-box:hover {
-            background: #f8f9fa;
+            border-color: #2980b9;
+            background: #f0f6fa;
         }
-
         .upload-box i {
             font-size: 2rem;
         }
-
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            resize: none;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            background: #f8f9fa;
+        .upload-preview {
+            margin-top: 8px;
+            max-width: 100px;
+            border-radius: 8px;
+            display: none;
         }
-
-        textarea::placeholder {
-            color: #999;
+        .upload-preview.video {
+            max-width: 120px;
         }
-
         .submit-btn {
-            background: #00e676;
+            background: #2980b9;
             color: white;
             padding: 1rem 2rem;
             border: none;
@@ -230,61 +195,75 @@ while ($row = $result->fetch_assoc()) {
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            float: right;
-            transition: all 0.2s ease;
+            transition: background 0.2s;
+            display: block;
+            margin: 2rem auto 0 auto;
         }
-
         .submit-btn:hover {
-            background: #00c853;
-            transform: translateY(-1px);
+            background: #1a5e8a;
         }
-
-        .submit-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
+        .thankyou {
+            text-align: center;
+            font-size: 1.1rem;
+            margin: 2rem 0 1rem 0;
+            color: #27ae60;
+            font-weight: 600;
         }
-
-        .form-disabled {
-            opacity: 0.7;
+        .footer {
+            text-align: center;
+            font-size: 0.95rem;
+            color: #888;
+            margin-top: 2rem;
+            border-top: 1px dashed #ccc;
+            padding-top: 1rem;
+        }
+        @media (max-width: 700px) {
+            .feedback-main {
+                padding: 1.2rem 0.5rem 1rem 0.5rem;
+            }
+            .upload-area {
+                flex-direction: column;
+                gap: 1.2rem;
+            }
+            .bg-svg.topleft, .bg-svg.bottomright {
+                width: 100px;
+                height: 100px;
+            }
+        }
+        /* Decorative SVGs */
+        .bg-svg {
+            position: absolute;
+            z-index: 1;
+            opacity: 0.13;
             pointer-events: none;
         }
-
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                padding: 0 15px;
-                margin: 20px auto;
-            }
-
-            .header-banner {
-                height: 200px;
-            }
-
-            .header-banner h1 {
-                font-size: 3rem;
-            }
+        .bg-svg.topleft {
+            top: 0;
+            left: 0;
+            width: 180px;
+            height: 180px;
+        }
+        .bg-svg.bottomright {
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
         }
     </style>
 </head>
 <body>
-    <?php include 'header.php'; ?>
-
-    <div class="header-banner">
-        <h1>Feedback</h1>
-    </div>
-
-    <div class="container">
-        <?php if (!$has_paid_bookings): ?>
-            <div class="preview-notice">
-                <i class="fas fa-info-circle"></i>
-                This is a preview of the feedback form. To submit actual feedback, you need to make a booking and complete the payment first.
-            </div>
-        <?php endif; ?>
-
-        <div class="feedback-card <?php echo !$has_paid_bookings ? 'form-disabled' : ''; ?>">
-            <h2>Rate package:</h2>
-            <select class="package-select" name="package_id" required <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
+<?php include 'header.php'; ?>
+<div class="feedback-main">
+    <div class="camp-logo">TasikBiruCamps</div>
+    <div class="feedback-title">We Value Your Feedback</div>
+    <div class="feedback-desc">Help us improve by sharing your experience below.</div>
+    <?php if (!$has_paid_bookings): ?>
+        <div class="thankyou" style="color:#bfa100;">This is a preview. Please make a booking and payment to submit real feedback.</div>
+    <?php endif; ?>
+    <form action="submit_feedback.php" method="POST" enctype="multipart/form-data" <?php echo !$has_paid_bookings ? 'class="form-disabled"' : ''; ?>>
+        <div class="form-section">
+            <label for="package_id" style="font-weight:500;">Select Package</label>
+            <select class="package-select" name="package_id" id="package_id" required <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
                 <option value="">Select a package...</option>
                 <?php foreach ($packages as $package): ?>
                     <option value="<?php echo $package['package_id']; ?>">
@@ -292,56 +271,78 @@ while ($row = $result->fetch_assoc()) {
                     </option>
                 <?php endforeach; ?>
             </select>
-
-            <div class="emoji-rating">
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                    <input type="radio" name="rating" id="rating<?php echo $i; ?>" value="<?php echo $i; ?>" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
-                    <label for="rating<?php echo $i; ?>"><?php echo $i === 1 ? '😠' : ($i === 2 ? '😕' : ($i === 3 ? '😊' : ($i === 4 ? '😃' : '🤩'))); ?></label>
+        </div>
+        <div class="form-section">
+            <label style="font-weight:500;">Your Rating</label>
+            <div class="star-rating">
+                <?php for ($i = 5; $i >= 1; $i--): ?>
+                    <input type="radio" name="rating" id="star<?php echo $i; ?>" value="<?php echo $i; ?>" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
+                    <label for="star<?php echo $i; ?>" title="<?php echo $i; ?> stars">&#9733;</label>
                 <?php endfor; ?>
             </div>
-
-            <div class="media-section">
-                <h3>Add photos and video</h3>
-                <div class="upload-area">
-                    <div class="upload-box" id="photoUpload">
-                        <i class="fas fa-camera"></i>
-                        <p>Photo</p>
-                        <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
-                    </div>
-                    <div class="upload-box" id="videoUpload">
-                        <i class="fas fa-video"></i>
-                        <p>Video</p>
-                        <input type="file" id="videoInput" name="video" accept="video/*" style="display: none" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
-                    </div>
+        </div>
+        <div class="form-section">
+            <label for="feedback" style="font-weight:500;">Your Comments</label>
+            <textarea name="feedback" id="feedback" placeholder="Type your comment here..." required <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>></textarea>
+        </div>
+        <div class="form-section media-section">
+            <span class="media-label">Add Photos and Video (optional)</span>
+            <div class="upload-area">
+                <div class="upload-box" onclick="document.getElementById('photoInput').click();">
+                    <i class="fas fa-camera"></i>
+                    <p>Photo</p>
+                    <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?> onchange="previewPhoto(event)">
+                    <img id="photoPreview" class="upload-preview" src="#" alt="Photo Preview" />
+                </div>
+                <div class="upload-box" onclick="document.getElementById('videoInput').click();">
+                    <i class="fas fa-video"></i>
+                    <p>Video</p>
+                    <input type="file" id="videoInput" name="video" accept="video/*" style="display: none" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?> onchange="previewVideo(event)">
+                    <video id="videoPreview" class="upload-preview video" controls></video>
                 </div>
             </div>
         </div>
-
-        <div class="feedback-section">
-            <h2>Your feedback:</h2>
-            <form action="submit_feedback.php" method="POST" enctype="multipart/form-data">
-                <textarea name="feedback" placeholder="type your comment here...." required <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>></textarea>
-                <button type="submit" class="submit-btn" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
-                    <?php echo !$has_paid_bookings ? 'Preview Mode' : 'Submit Feedback'; ?>
-                </button>
-            </form>
-        </div>
+        <button type="submit" class="submit-btn" <?php echo !$has_paid_bookings ? 'disabled' : ''; ?>>
+            <?php echo !$has_paid_bookings ? 'Preview Mode' : 'Submit Feedback'; ?>
+        </button>
+    </form>
+    <div class="footer">
+        TasikBiruCamps, Jalan Tasik Biru, 12345 Kampung Damai, Malaysia<br>
+        Phone: 012-3456789 &nbsp;|&nbsp; Email: info@tasikbirucamps.com<br>
+        <em>Thank you for helping us improve!</em>
     </div>
-
-    <script>
-        // Handle photo upload
-        document.getElementById('photoUpload').addEventListener('click', function() {
-            if (!this.querySelector('input').disabled) {
-                document.getElementById('photoInput').click();
-            }
-        });
-
-        // Handle video upload
-        document.getElementById('videoUpload').addEventListener('click', function() {
-            if (!this.querySelector('input').disabled) {
-                document.getElementById('videoInput').click();
-            }
-        });
-    </script>
+</div>
+<script>
+function previewPhoto(event) {
+    const input = event.target;
+    const preview = document.getElementById('photoPreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.src = '#';
+        preview.style.display = 'none';
+    }
+}
+function previewVideo(event) {
+    const input = event.target;
+    const preview = document.getElementById('videoPreview');
+    if (input.files && input.files[0]) {
+        const fileURL = URL.createObjectURL(input.files[0]);
+        preview.src = fileURL;
+        preview.style.display = 'block';
+    } else {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+}
+</script>
+<!-- Decorative SVGs -->
+<svg class="bg-svg topleft" viewBox="0 0 200 200" fill="none"><ellipse cx="100" cy="100" rx="100" ry="100" fill="#bca48a"/></svg>
+<svg class="bg-svg bottomright" viewBox="0 0 200 200" fill="none"><rect x="0" y="0" width="200" height="200" rx="60" fill="#8c6d52"/></svg>
 </body>
 </html>
