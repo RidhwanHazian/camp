@@ -1,20 +1,52 @@
 <?php
-session_start();                    // Start session after enabling error reporting
-include 'db_connection.php';
-include 'session_check.php';        // Load session check functions
-checkAdminSession();
+include 'session_check.php';
+error_log('ROLE: ' . ($_SESSION['role'] ?? 'not set'));
+error_log('ADMIN_ID: ' . ($_SESSION['admin_id'] ?? 'not set'));
+session_write_close();
+checkAdminSession(); // Only admin can edit bookings
+
+require_once 'db_connection.php';
+
 $booking_id = isset($_GET['id']) ? $_GET['id'] : null;
 
 if (!$booking_id) {
     $_SESSION['error'] = "No booking ID provided";
-    header('Location: customer_booking_staff.php');
+    header('Location: manage_bookings.php');
     exit();
 }
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Update booking information
+        // Fetch package_id for this booking
+        $package_id_stmt = $conn->prepare("SELECT package_id FROM bookings WHERE booking_id = ?");
+        $package_id_stmt->bind_param("i", $booking_id);
+        $package_id_stmt->execute();
+        $package_id_result = $package_id_stmt->get_result();
+        $package_row = $package_id_result->fetch_assoc();
+        $package_id = $package_row['package_id'];
+        $package_id_stmt->close();
+
+        // Fetch package prices
+        $price_stmt = $conn->prepare("SELECT adult_price, child_price FROM package_prices WHERE package_id = ?");
+        $price_stmt->bind_param("i", $package_id);
+        $price_stmt->execute();
+        $price_result = $price_stmt->get_result();
+        $price_row = $price_result->fetch_assoc();
+        $adult_price = $price_row['adult_price'];
+        $child_price = $price_row['child_price'];
+        $price_stmt->close();
+
+        // Calculate number of days (inclusive)
+        $arrival = new DateTime($_POST['arrival_date']);
+        $departure = new DateTime($_POST['departure_date']);
+        $interval = $arrival->diff($departure);
+        $num_days = $interval->days + 1;
+
+        // Calculate new total price
+        $total_price = ($_POST['num_adults'] * $adult_price + $_POST['num_children'] * $child_price) * $num_days;
+
+        // Update booking information including total_price
         $stmt = $conn->prepare("
             UPDATE bookings 
             SET full_name = ?,
@@ -23,11 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 num_adults = ?,
                 num_children = ?,
                 arrival_date = ?,
-                departure_date = ?
+                departure_date = ?,
+                total_price = ?
             WHERE booking_id = ?
         ");
-        
-        $stmt->bind_param("sssiissi", 
+        $stmt->bind_param("sssiissdi", 
             $_POST['full_name'],
             $_POST['email'],
             $_POST['phone_no'],
@@ -35,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['num_children'],
             $_POST['arrival_date'],
             $_POST['departure_date'],
+            $total_price,
             $booking_id
         );
 
@@ -44,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Error updating booking: " . $stmt->error);
         }
 
-        header('Location: customer_booking_staff.php');
+        header('Location: manage_bookings.php');
         exit();
     } catch(Exception $e) {
         $_SESSION['error'] = "Error updating booking: " . $e->getMessage();
@@ -60,12 +93,7 @@ try {
             py.payment_id,
             py.amount as paid_amount,
             py.payment_method,
-            py.payment_date,
-            CASE 
-                WHEN py.payment_id IS NULL THEN 'pending'
-                WHEN py.payment_details IS NOT NULL THEN 'verified'
-                ELSE 'paid'
-            END as payment_status
+            py.payment_date
         FROM bookings b 
         LEFT JOIN packages p ON b.package_id = p.package_id 
         LEFT JOIN payments py ON b.booking_id = py.booking_id
@@ -81,7 +109,7 @@ try {
     }
 } catch(Exception $e) {
     $_SESSION['error'] = $e->getMessage();
-    header('Location: customer_booking_staff.php');
+    header('Location: manage_bookings.php');
     exit();
 }
 ?>
@@ -115,12 +143,13 @@ try {
                 <p><strong>Package:</strong> <?php echo htmlspecialchars($booking['package_name']); ?></p>
                 <p><strong>Total Price:</strong> RM <?php echo htmlspecialchars($booking['total_price']); ?></p>
                 <p>
-                    <strong>Payment Status:</strong> 
+                    <strong>Status:</strong> 
                     <span class="badge bg-<?php 
-                        echo $booking['payment_status'] === 'verified' ? 'success' : 
-                            ($booking['payment_status'] === 'paid' ? 'warning' : 'danger'); 
+                        echo $booking['status'] === 'complete' ? 'success' : 
+                            ($booking['status'] === 'confirmed' ? 'primary' : 
+                            ($booking['status'] === 'paid' ? 'warning' : 'danger'));
                     ?>">
-                        <?php echo ucfirst(htmlspecialchars($booking['payment_status'])); ?>
+                        <?php echo ucfirst(htmlspecialchars($booking['status'])); ?>
                     </span>
                 </p>
                 <?php if ($booking['payment_id']): ?>
@@ -131,6 +160,12 @@ try {
             </div>
         </div>
 
+        <?php if ($booking['status'] === 'complete'): ?>
+            <div class="alert alert-info">
+                <strong>This booking is complete and cannot be edited.</strong><br>
+                If you need to make changes, please contact support or create a new booking.
+            </div>
+        <?php else: ?>
         <form method="POST" class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">Edit Booking Details</h5>
@@ -182,13 +217,10 @@ try {
             </div>
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary">Update Booking</button>
-                <?php if ($_SESSION['role'] === 'admin'): ?>
-                    <a href="manage_bookings.php" class="btn btn-secondary">Cancel</a>
-                <?php else: ?>
-                    <a href="customer_booking_staff.php" class="btn btn-secondary">Cancel</a>
-                <?php endif; ?>
+                <a href="manage_bookings.php" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
+        <?php endif; ?>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
