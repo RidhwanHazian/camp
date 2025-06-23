@@ -1,8 +1,8 @@
 <?php
-session_start();
-include 'db_connection.php';
 include 'session_check.php';
 checkStaffSession();
+
+include 'db_connection.php';
 
 $staff_id = $_SESSION['staff_id'];
 $staff_name = $_SESSION['full_name'] ?? 'Staff'; // Use full_name for consistency
@@ -51,12 +51,12 @@ if ($result) {
     $total_tasks += mysqli_fetch_assoc($result)['total'];
 }
 
-// Fetch recent bookings (last 3 bookings with 'confirmed' status)
+// Fetch recent bookings (last 3 bookings with 'complete' status)
 $recent_bookings = [];
 $recent_query = "SELECT b.booking_id, b.full_name as customer_name, p.package_name, b.arrival_date, b.departure_date, b.status 
                 FROM bookings b 
                 LEFT JOIN packages p ON b.package_id = p.package_id 
-                WHERE b.status = 'confirmed'
+                WHERE b.status = 'complete'
                 ORDER BY b.arrival_date DESC 
                 LIMIT 3";
 $result = mysqli_query($conn, $recent_query);
