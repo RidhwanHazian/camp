@@ -1,10 +1,7 @@
 <?php
-session_start();
 include 'db_connection.php';
-include 'session_check.php';
-checkAdminSession();
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+if (!isset($_GET['id'])) {
     header('Location: manage_campsites.php');
     exit();
 }
