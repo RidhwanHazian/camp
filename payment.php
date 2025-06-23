@@ -1,8 +1,8 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkCustomerSession();
-
-require_once 'db_connection.php';
 
 // Get booking ID from URL
 $booking_id = isset($_GET['booking_id']) ? $_GET['booking_id'] : null;

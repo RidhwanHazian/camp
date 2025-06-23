@@ -1,12 +1,8 @@
 <?php
 session_start();
-require_once 'db_connection.php';
-
-// Only allow admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
-    exit();
-}
+include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     $_SESSION['error'] = "Invalid schedule ID provided.";

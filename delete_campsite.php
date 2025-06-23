@@ -1,6 +1,8 @@
 <?php
-session_start(); // Start the session to use $_SESSION messages
+session_start();
 include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 
 // Enable error reporting
 error_reporting(E_ALL);

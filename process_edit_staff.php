@@ -1,6 +1,8 @@
 <?php
 session_start();
 include 'db_connection.php';
+include 'session_check.php';
+checkCustomerSession();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     try {

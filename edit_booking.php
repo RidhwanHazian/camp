@@ -1,11 +1,8 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
-error_log('ROLE: ' . ($_SESSION['role'] ?? 'not set'));
-error_log('ADMIN_ID: ' . ($_SESSION['admin_id'] ?? 'not set'));
-session_write_close();
-checkAdminSession(); // Only admin can edit bookings
-
-require_once 'db_connection.php';
+checkAdminSession();
 
 $booking_id = isset($_GET['id']) ? $_GET['id'] : null;
 

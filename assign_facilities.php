@@ -1,4 +1,5 @@
 <?php
+session_start();
 include 'db_connection.php';
 include 'session_check.php';
 checkAdminSession();

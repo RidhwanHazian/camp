@@ -1,8 +1,8 @@
 <?php
+session_start();
+include 'db_connection.php';
 include 'session_check.php';
 checkCustomerSession();
-
-require_once 'db_connection.php';
 
 // Debug: Check if connected to database
 if (!$conn) {

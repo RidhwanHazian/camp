@@ -1,12 +1,8 @@
 <?php
 session_start();
-// Check if user is logged in as admin or staff
-if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'staff')) {
-    header('Location: login.php');
-    exit();
-}
-
-require_once 'db_connection.php';
+include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 
 try {
     $id = $_POST['id'] ?? '';

@@ -1,5 +1,8 @@
 <?php
-require_once 'db_connection.php';
+session_start();
+include 'db_connection.php';
+include 'session_check.php';
+checkCustomerSession();
 
 /**
  * Add a basic notification

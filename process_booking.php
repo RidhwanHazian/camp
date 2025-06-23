@@ -1,16 +1,8 @@
 <?php
 session_start();
-require_once 'db_connection.php';
-require_once 'notifications_function.php';
-
-// Set JSON header
-header('Content-Type: application/json');
-
-// Check if user is logged in - fix session variable name
-if (!isset($_SESSION['customer_id'])) {
-    echo json_encode(['success' => false, 'error' => 'Please log in to make a booking']);
-    exit();
-}
+include 'db_connection.php';
+include 'session_check.php';
+checkCustomerSession();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_id = $_POST['user_id'];
@@ -25,10 +17,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $status = 'pending';
 
     if (!$arrival_date || !$departure_date) {
-        echo json_encode(['success' => false, 'error' => 'Please select both arrival and departure dates']);
+        header("Location: booking_form.php?error=Please+select+both+arrival+and+departure+dates");
         exit();
     }
-    
+
     mysqli_begin_transaction($conn);
 
     try {
@@ -41,10 +33,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $prices = mysqli_fetch_assoc($result);
 
         if (!$prices) {
-            throw new Exception('Could not find pricing for the selected package.');
+            throw new Exception('Pricing not found for the selected package.');
         }
-        
-        // Final Slot Check
+
+        // Slot check
         $slot_check_sql = "
             SELECT ps.slot_limit, 
                    (SELECT COUNT(*) FROM bookings b WHERE b.package_id = ? AND b.arrival_date = ?) as booked_slots
@@ -57,21 +49,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $slot_result = mysqli_stmt_get_result($slot_stmt);
         $slot_info = mysqli_fetch_assoc($slot_result);
 
-        // Debug: Log slot info
-        error_log('Slot info: ' . print_r($slot_info, true));
-
-        // Only block if slot_limit is set and reached; otherwise allow booking (unlimited)
         if ($slot_info && $slot_info['slot_limit'] !== null && $slot_info['slot_limit'] > 0 && $slot_info['booked_slots'] >= $slot_info['slot_limit']) {
-            throw new Exception('Sorry, the last available slot for this package and date has just been booked.');
+            throw new Exception('Sorry, this slot is fully booked.');
         }
 
-        // Calculate total price
+        // Total price calculation
         $datetime1 = new DateTime($arrival_date);
         $datetime2 = new DateTime($departure_date);
         $interval = $datetime1->diff($datetime2);
         $num_days = $interval->days + 1;
+
         $total_price = (($num_adults * $prices['adult_price']) + ($num_children * $prices['child_price'])) * $num_days;
-        
+
         // Insert booking
         $insert_sql = "
             INSERT INTO bookings (user_id, full_name, email, phone_no, num_adults, num_children, package_id, arrival_date, departure_date, status, total_price) 
@@ -80,13 +69,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $insert_stmt = mysqli_prepare($conn, $insert_sql);
         mysqli_stmt_bind_param($insert_stmt, 'isssiiisssd', $user_id, $full_name, $email, $phone, $num_adults, $num_children, $package_id, $arrival_date, $departure_date, $status, $total_price);
         mysqli_stmt_execute($insert_stmt);
-        
+
         $booking_id = mysqli_insert_id($conn);
 
-        // Notifications
-        createBookingNotification($user_id, $booking_id);
+        // Optional notification functions
+        if (function_exists('createBookingNotification')) {
+            createBookingNotification($user_id, $booking_id);
+        }
+
         $days_until_camp = $datetime1->diff(new DateTime())->days;
-        if ($days_until_camp <= 7) {
+        if ($days_until_camp <= 7 && function_exists('createReminderNotification')) {
             createReminderNotification($user_id, $booking_id);
         }
 
@@ -96,10 +88,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     } catch (Exception $e) {
         mysqli_rollback($conn);
-        error_log("Booking Error: " . $e->getMessage());
-        echo json_encode(['success' => false, 'error' => 'Booking failed: ' . $e->getMessage()]);
+        $errorMsg = urlencode("Booking failed: " . $e->getMessage());
+        header("Location: booking_form.php?error=$errorMsg");
+        exit();
     }
 } else {
-    echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+    header("Location: booking_form.php?error=Invalid+request+method");
+    exit();
 }
 ?>
