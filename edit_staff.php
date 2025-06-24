@@ -2,7 +2,7 @@
 session_start();
 include 'db_connection.php';
 include 'session_check.php';
-checkCustomerSession();
+checkAdminSession();
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     $_SESSION['error'] = "Invalid staff ID provided.";

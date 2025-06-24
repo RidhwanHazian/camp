@@ -1,7 +1,7 @@
 <?php
-  session_start();                    // Start session after enabling error reporting
+  session_start();                    
   include 'db_connection.php';
-  include 'session_check.php';        // Load session check functions
+  include 'session_check.php';        
   checkAdminSession(); 
 ?>
 <!DOCTYPE html>
@@ -102,6 +102,7 @@
       padding: 12px 15px;
       text-align: left;
       border-bottom: 1px solid #e0e0e0;
+      vertical-align: top;
     }
 
     th {
@@ -118,12 +119,38 @@
       transition: background 0.2s ease-in-out;
     }
 
-
     td.rating-emoji {
-      font-size: 1.8rem;
-      text-align: center;
+      text-align: center !important;
+      vertical-align: middle;
     }
 
+    .star-rating {
+      display: flex;
+      font-size: 1rem;
+      justify-content: center;
+    }
+
+    .star-rating .fa-star {
+      margin: 0 2px;
+      color: #ccc;
+    }
+
+    .star-rating .fa-star.filled {
+      color: #f1c40f;
+    }
+
+    .feedback-media img, .feedback-media video {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 6px;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .feedback-media .no-media {
+      color: #888;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -158,12 +185,9 @@
       <tbody>
         <?php
         include 'db_connection.php';
-
-        // Debug: Print any MySQL errors
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
         try {
-          // Fetch all feedback with booking and package details
           $sql = "SELECT f.*, b.full_name, b.package_id, p.package_name, p.description
                   FROM feedback f 
                   LEFT JOIN bookings b ON f.booking_id = b.booking_id
@@ -171,25 +195,16 @@
                   ORDER BY f.feedback_id DESC";
 
           $result = mysqli_query($conn, $sql);
-          
-          if (!$result) {
-            throw new Exception("Query failed: " . mysqli_error($conn));
-          }
 
           if (mysqli_num_rows($result) > 0) {
             $counter = 1;
             while ($row = mysqli_fetch_assoc($result)) {
-              // Debug: Print row data
-              // echo "<pre>"; print_r($row); echo "</pre>";
-              
-              $ratingEmoji = match((int)$row['rating']) {
-                5 => "😍",
-                4 => "😊",
-                3 => "😐",
-                2 => "😕",
-                1 => "😡",
-                default => "❓"
-              };
+              $stars = '<div class="star-rating">';
+              for ($i = 1; $i <= 5; $i++) {
+                $filled = $i <= $row['rating'] ? 'filled' : '';
+                $stars .= "<i class='fas fa-star $filled'></i>";
+              }
+              $stars .= '</div>';
 
               $packageName = $row['package_name'] ?? 'Unknown Package';
               if (!empty($row['description'])) {
@@ -201,19 +216,23 @@
                       <td>" . htmlspecialchars($row['full_name'] ?? 'Anonymous') . "</td>
                       <td>{$packageName}</td>
                       <td>" . htmlspecialchars($row['comment']) . "</td>
-                      <td class='rating-emoji' title='Rating: {$row['rating']}'>{$ratingEmoji}</td>
-                      <td>";
+                      <td class='rating-emoji' title='Rating: {$row['rating']}'>{$stars}</td>
+                      <td class='feedback-media'>";
 
-              // Check if photo exists and display it
+              $hasMedia = false;
+
               if (!empty($row['photo_path'])) {
-                $photoPath = htmlspecialchars($row['photo_path']);
-                echo "<a href='{$photoPath}' target='_blank' title='View Photo'>🖼️</a> ";
+                echo "<img src='" . htmlspecialchars($row['photo_path']) . "' alt='Photo'>";
+                $hasMedia = true;
               }
 
-              // Check if video exists and display it
               if (!empty($row['video_path'])) {
-                $videoPath = htmlspecialchars($row['video_path']);
-                echo "<a href='{$videoPath}' target='_blank' title='View Video'>🎥</a>";
+                echo "<video src='" . htmlspecialchars($row['video_path']) . "' controls></video>";
+                $hasMedia = true;
+              }
+
+              if (!$hasMedia) {
+                echo "<span class='no-media'>No media attached</span>";
               }
 
               echo "</td></tr>";

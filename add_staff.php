@@ -1,7 +1,8 @@
 <?php
-include 'session_check.php';
-checkAdminSession(); // Only admins can add staff
+session_start();
 include 'db_connection.php';
+include 'session_check.php';
+checkAdminSession();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,45 +79,9 @@ include 'db_connection.php';
       text-decoration: underline;
     }
 
-    .sidebar {
-      width: 200px;
-      background-color: #333;
-      color: #fff;
-      padding: 1rem;
-    }
-
-    .sidebar h2 {
-      margin-bottom: 1rem;
-    }
-
-    .sidebar a {
-      display: block;
-      color: #fff;
-      text-decoration: none;
-      padding: 0.5rem 0;
-    }
-
-    .sidebar a:hover {
-      text-decoration: underline;
-    }
-
-    .sidebar a.active {
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
-
-<div class="sidebar">
-  <h2>Admin</h2>
-  <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
-  <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
-  <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Campsites</a>
-  <a href="manage_staff.php" class="active"><i class="fas fa-users"></i> Manage Staff</a>
-  <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
-  <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
-  <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
 
 <div class="container">
   <h1>Add New Staff</h1>
