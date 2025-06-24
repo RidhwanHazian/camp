@@ -4,44 +4,25 @@ include 'db_connection.php';
 include 'session_check.php';
 checkAdminSession();
 
-try {
-    $id = $_POST['id'] ?? '';
-    if (empty($id)) {
-        throw new Exception("No booking ID provided");
-    }
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['confirmed']) && $_POST['confirmed'] === 'yes') {
+    $booking_id = $_POST['id'];
 
-    // First check if the booking exists
-    $stmt = $conn->prepare("SELECT booking_id FROM bookings WHERE booking_id = ?");
-    $stmt->execute([$id]);
-    if (!$stmt->fetch()) {
-        throw new Exception("Booking not found");
-    }
+    // First, delete from payments table
+    $deletePayments = $conn->prepare("DELETE FROM payments WHERE booking_id = ?");
+    $deletePayments->bind_param("i", $booking_id);
+    $deletePayments->execute();
 
-    // Delete related payments first
-    $stmt = $conn->prepare("DELETE FROM payments WHERE booking_id = ?");
-    $stmt->execute([$id]);
-    
-    // Then delete the booking
-    $stmt = $conn->prepare("DELETE FROM bookings WHERE booking_id = ?");
-    $stmt->execute([$id]);
-    
-    $_SESSION['success'] = "Booking #$id has been deleted successfully";
-    
-    // Redirect based on role
-    if ($_SESSION['role'] === 'admin') {
-        header('Location: manage_bookings.php');
+    // Then, delete from bookings table
+    $deleteBooking = $conn->prepare("DELETE FROM bookings WHERE booking_id = ?");
+    $deleteBooking->bind_param("i", $booking_id);
+
+    if ($deleteBooking->execute()) {
+        header("Location: manage_bookings.php?deleted=1");
+        exit();
     } else {
-        header('Location: staff_dashboard.php');
+        die("Failed to delete booking: " . $conn->error);
     }
-    exit();
-
-} catch(Exception $e) {
-    $_SESSION['error'] = $e->getMessage();
-    if ($_SESSION['role'] === 'admin') {
-        header('Location: manage_bookings.php');
-    } else {
-        header('Location: staff_dashboard.php');
-    }
+} else {
+    header("Location: manage_bookings.php?error=invalid_request");
     exit();
 }
-?>
