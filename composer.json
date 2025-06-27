@@ -1,0 +1,12 @@
+{
+    "name": "ridhwan/camp",
+    "authors": [
+        {
+            "name": "RidhwanHazian",
+            "email": "iwghostpride@gmail.com"
+        }
+    ],
+    "require": {
+        "phpmailer/phpmailer": "^6.10"
+    }
+}

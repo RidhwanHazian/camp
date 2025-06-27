@@ -1,15 +1,15 @@
 <?php
 session_start();
-include 'session_check.php';
+require_once 'session_check.php';
 include 'db_connection.php';
 checkStaffSession();
 
-// Handle payment verification
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
     try {
         $booking_id = $_POST['booking_id'];
         $payment_id = $_POST['payment_id'];
         $status_note = isset($_POST['payment_status_note']) ? $_POST['payment_status_note'] : '';
+
         // Begin transaction
         $conn->begin_transaction();
 
@@ -36,10 +36,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
 
         $conn->commit();
 
+        // ✅ Only send email if marked "complete"
+        if ($new_status === 'complete') {
+            require_once 'send_email.php';
+
+            $stmt = $conn->prepare("
+                SELECT 
+                    b.full_name, 
+                    b.email, 
+                    b.total_price,
+                    b.num_adults,
+                    b.num_children,
+                    b.arrival_date,
+                    b.departure_date,
+                    p.package_name,
+                    py.payment_method,
+                    py.payment_date
+                FROM bookings b
+                LEFT JOIN packages p ON b.package_id = p.package_id
+                LEFT JOIN payments py ON b.booking_id = py.booking_id
+                WHERE b.booking_id = ?
+            ");
+
+            $stmt->bind_param("i", $booking_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $customer = $result->fetch_assoc();
+
+            if ($customer) {
+                $stayDuration = date("d M Y", strtotime($customer['arrival_date'])) . ' - ' . date("d M Y", strtotime($customer['departure_date']));
+                $guestSummary = $customer['num_adults'] . ' Adults';
+                if ($customer['num_children'] > 0) {
+                    $guestSummary .= ', ' . $customer['num_children'] . ' Children';
+                }
+
+                $paymentDateFormatted = $customer['payment_date'] 
+                    ? date("d M Y, h:i A", strtotime($customer['payment_date']))
+                    : 'N/A';
+
+                $paymentMethod = $customer['payment_method'] ?: 'N/A';
+
+                sendPaymentReceipt(
+                    $customer['email'],
+                    $customer['full_name'],
+                    $booking_id,
+                    $customer['total_price'],
+                    $customer['package_name'] ?? 'N/A',
+                    $stayDuration,
+                    $guestSummary,
+                    $paymentMethod,
+                    $paymentDateFormatted
+                );
+            }
+        }
+
         $_SESSION['success'] = "Payment has been confirmed successfully!";
         header("Location: customer_booking_staff.php");
         exit();
-    } catch(Exception $e) { // Changed to generic Exception for mysqli errors
+    } catch(Exception $e) {
         $conn->rollback();
         $_SESSION['error'] = "Error confirming payment: " . $e->getMessage();
     }
