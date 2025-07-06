@@ -192,7 +192,7 @@ session_start();
             Already have an account? <a href="login.php">Log in</a>
         </div>
         
-        <a href="homepage.php" class="back-link">Back</a>
+        <a href="login.php" class="back-link">Back</a>
     </div>
     
     <div class="copyright">
