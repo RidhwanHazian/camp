@@ -1020,24 +1020,24 @@ if ($count_row = $count_result->fetch_assoc()) {
         <h2>Meet Our Team</h2>
         <div class="team-row">
             <div class="team-card">
-                <div class="team-avatar"><img src="teams/syahidah.jpg" alt="Team Member 1"></div>
+                <div class="team-avatar"><img src="Assets/syahidah.jpg" alt="Team Member 1"></div>
                 <h4>Siti Nur Syahidah</h4>
-                <p>Founder and Camp Director</p>
+                <p>Project and System Manager</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><img src="teams/siti aisyah.jpg" alt="Team Member 2"></div>
+                <div class="team-avatar"><img src="Assets/siti aisyah.jpg" alt="Team Member 2"></div>
                 <h4>Siti Aisyah</h4>
-                <p>Adventure Coordinator</p>
+                <p>System Analyst</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><img src="teams/lutfiah.jpg" alt="Team Member 3"></div>
+                <div class="team-avatar"><img src="Assets/lutfiah.jpg" alt="Team Member 3"></div>
                 <h4>Lutfiah Qistina</h4>
-                <p>Safety and Wellness Lead</p>
+                <p>System Programmer</p>
             </div>
             <div class="team-card">
-                <div class="team-avatar"><img src="teams/ridhwan.jpg" alt="Team Member 4"></div>
+                <div class="team-avatar"><img src="Assets/ridhwan.jpg" alt="Team Member 4"></div>
                 <h4>Muhammad Ridhwan</h4>
-                <p>Community Manager</p>
+                <p>System Designer</p>
             </div>
         </div>
     </div>
