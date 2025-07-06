@@ -192,7 +192,7 @@
                   FROM feedback f 
                   LEFT JOIN bookings b ON f.booking_id = b.booking_id
                   LEFT JOIN packages p ON b.package_id = p.package_id
-                  ORDER BY f.feedback_id DESC";
+                  ORDER BY f.rating DESC";
 
           $result = mysqli_query($conn, $sql);
 
