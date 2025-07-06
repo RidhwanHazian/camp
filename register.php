@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -150,6 +153,17 @@
 <body>
     <div class="register-container">
         <h1>Create an Account</h1>
+        <?php
+        if (isset($_SESSION['error'])) {
+            echo "<p style='color: #ff6b6b; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; text-align: center;'>" . $_SESSION['error'] . "</p>";
+            unset($_SESSION['error']);
+        }
+
+        if (isset($_SESSION['success_message'])) {
+            echo "<p style='color: #4caf50; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; text-align: center;'>" . $_SESSION['success_message'] . "</p>";
+            unset($_SESSION['success_message']);
+        }
+        ?>
         <form action="process_register.php" method="POST">
             <div class="form-group">
                 <label for="username">Username</label>
