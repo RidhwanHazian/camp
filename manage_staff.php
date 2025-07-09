@@ -4,10 +4,25 @@ include 'db_connection.php';
 include 'session_check.php';
 checkAdminSession();
 
+// Schedule search
+$scheduleSearch = isset($_GET['search_schedule']) ? $conn->real_escape_string($_GET['search_schedule']) : '';
 $schedule_query = "SELECT 
     s.staff_name, 
     b.arrival_date, 
-    b.departure_date, b.full_name AS customer_name, b.status, b.booking_id FROM bookings b JOIN staff s ON b.staff_id = s.staff_id ORDER BY b.arrival_date DESC";
+    b.departure_date, 
+    b.full_name AS customer_name, 
+    b.status, 
+    b.booking_id 
+    FROM bookings b 
+    JOIN staff s ON b.staff_id = s.staff_id";
+
+if (!empty($scheduleSearch)) {
+    $schedule_query .= " WHERE s.staff_name LIKE '%$scheduleSearch%' 
+                        OR b.full_name LIKE '%$scheduleSearch%' 
+                        OR b.status LIKE '%$scheduleSearch%'";
+}
+
+$schedule_query .= " ORDER BY b.arrival_date DESC";
 $schedule_result = $conn->query($schedule_query);
 ?>
 
@@ -195,15 +210,7 @@ $schedule_result = $conn->query($schedule_query);
   <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
   <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
   <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Packages</a>
-  <a href="manage_staff.php" class="active"><i class="fas fa-users"></i> Manage Staff</a>
-
-  <div style="margin: 0.1rem 0; border-top: 1px solid #7f8c8d;"></div>
-  <div class="section-label">Manage staff sidebar</div>
-  <a href="#staff-section" class="sub-link"><i class="fas fa-user"></i> Staff List</a>
-  <a href="#schedule-section" class="sub-link"><i class="fas fa-clock"></i> Staff Schedule</a>
-  <a href="#facility-section" class="sub-link"><i class="fas fa-building"></i> Facilities</a>
-
-  <div style="margin: 0.1rem 0; border-top: 1px solid #7f8c8d;"></div>
+  <a href="manage_staff.php" class ="active"><i class="fas fa-users"></i> Manage Staff</a>
   <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
   <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
   <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
@@ -213,13 +220,12 @@ $schedule_result = $conn->query($schedule_query);
 
 <div class="content">
   <h1>Manage Staff</h1>
-  
 
   <!-- Staff Section -->
   <div id="staff-section" class="section-header">
-    <div class="search-box">
-      <input type="text" placeholder="Search staff...">
-    </div>
+    <form class="search-box" method="GET" action="">
+      <input type="text" name="search_staff" placeholder="Search staff..." value="<?php echo isset($_GET['search_staff']) ? htmlspecialchars($_GET['search_staff']) : ''; ?>">
+    </form>
     <a class="add-button" href="add_staff.php">+ Add New Staff</a>
   </div>
 
@@ -237,7 +243,11 @@ $schedule_result = $conn->query($schedule_query);
       </thead>
       <tbody>
         <?php
-        $staff_sql = "SELECT * FROM staff";
+        $searchStaff = isset($_GET['search_staff']) ? $conn->real_escape_string($_GET['search_staff']) : '';
+        $staff_sql = !empty($searchStaff) ? 
+          "SELECT * FROM staff WHERE staff_name LIKE '%$searchStaff%'" :
+          "SELECT * FROM staff";
+
         $staff_result = $conn->query($staff_sql);
         $num = 1;
 
@@ -266,9 +276,9 @@ $schedule_result = $conn->query($schedule_query);
 
   <!-- Schedule Section -->
   <div id="schedule-section" class="section-header">
-    <div class="search-box">
-      <input type="text" placeholder="Search schedule...">
-    </div>
+    <form class="search-box" method="GET" action="">
+      <input type="text" name="search_schedule" placeholder="Search schedule (staff, customer, or status)..." value="<?php echo isset($_GET['search_schedule']) ? htmlspecialchars($_GET['search_schedule']) : ''; ?>">
+    </form>
     <a class="add-button" href="add_schedule.php">+ Add Schedule</a>
   </div>
 
@@ -303,7 +313,7 @@ $schedule_result = $conn->query($schedule_query);
           </tr>";
         }
       } else {
-        echo "<tr><td colspan='6'>No schedule found.</td></tr>";
+        echo "<tr><td colspan='7'>No schedule found.</td></tr>";
       }
       ?>
       </tbody>
@@ -312,9 +322,9 @@ $schedule_result = $conn->query($schedule_query);
 
   <!-- Assign Facilities Section -->
   <div id="facility-section" class="section-header">
-    <div class="search-box">
-      <input type="text" placeholder="Search facility assignments...">
-    </div>
+    <form class="search-box" method="GET" action="">
+      <input type="text" name="search_facility" placeholder="Search facility assignments..." value="<?php echo isset($_GET['search_facility']) ? htmlspecialchars($_GET['search_facility']) : ''; ?>">
+    </form>
     <a class="add-button" href="assign_facilities.php">+ Assign Facilities</a>
   </div>
 
@@ -330,10 +340,17 @@ $schedule_result = $conn->query($schedule_query);
       </thead>
       <tbody>
         <?php
+        $searchFacility = isset($_GET['search_facility']) ? $conn->real_escape_string($_GET['search_facility']) : '';
         $assignment_sql = "SELECT sf.staff_id, s.staff_name, f.facility_name, sf.status
                           FROM staff_facilities sf
                           JOIN staff s ON sf.staff_id = s.staff_id
                           JOIN facilities f ON sf.facility_id = f.facility_id";
+
+        if (!empty($searchFacility)) {
+          $assignment_sql .= " WHERE s.staff_name LIKE '%$searchFacility%' 
+                              OR f.facility_name LIKE '%$searchFacility%'";
+        }
+
         $assignment_result = $conn->query($assignment_sql);
 
         if ($assignment_result && $assignment_result->num_rows > 0) {
@@ -355,6 +372,26 @@ $schedule_result = $conn->query($schedule_query);
     </table>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+
+    if (params.has('search_schedule')) {
+      document.getElementById('schedule-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    if (params.has('search_facility')) {
+      document.getElementById('facility-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Optional: scroll to staff-section only if searching staff
+    if (params.has('search_staff')) {
+      document.getElementById('staff-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+</script>
 
 </body>
 </html>
