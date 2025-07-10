@@ -145,12 +145,61 @@
       border-radius: 6px;
       display: block;
       margin-bottom: 5px;
+      cursor: pointer;
     }
 
     .feedback-media .no-media {
       color: #888;
       font-style: italic;
     }
+
+    #mediaModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+
+    #mediaModal .modal-content {
+      position: relative;
+      text-align: center;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 10001;
+      background-color: rgba(0,0,0,0.5);
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+    }
+
+    .close-btn:hover {
+      background-color: rgba(255,255,255,0.25);
+      transform: scale(0.95);
+    }
+
+    .close-btn i {
+      pointer-events: none; /* so clicking the icon still triggers the span click */
+    }
+
   </style>
 </head>
 <body>
@@ -222,14 +271,17 @@
               $hasMedia = false;
 
               if (!empty($row['photo_path'])) {
-                echo "<img src='" . htmlspecialchars($row['photo_path']) . "' alt='Photo'>";
+                $src = htmlspecialchars($row['photo_path']);
+                echo "<img src='$src' alt='Photo' onclick=\"openMediaModal('image', '$src')\">";
                 $hasMedia = true;
               }
 
               if (!empty($row['video_path'])) {
-                echo "<video src='" . htmlspecialchars($row['video_path']) . "' controls></video>";
+                $src = htmlspecialchars($row['video_path']);
+                echo "<video src='$src' onclick=\"openMediaModal('video', '$src')\"></video>";
                 $hasMedia = true;
               }
+
 
               if (!$hasMedia) {
                 echo "<span class='no-media'>No media attached</span>";
@@ -249,6 +301,47 @@
     </table>
   </div>
 </div>
+
+<!-- Media Modal -->
+<div id="mediaModal" style="display: none;" onclick="closeMediaModal()">
+  <span class="close-btn" onclick="closeMediaModal(event)">
+    <i class="fas fa-times"></i>
+  </span>
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <img id="modalImage" style="display:none; max-width: 90%; max-height: 80vh;">
+    <video id="modalVideo" controls style="display:none; max-width: 90%; max-height: 80vh;"></video>
+  </div>
+</div>
+
+<script>
+function openMediaModal(type, src) {
+  const modal = document.getElementById('mediaModal');
+  const img = document.getElementById('modalImage');
+  const video = document.getElementById('modalVideo');
+
+  if (type === 'image') {
+    img.src = src;
+    img.style.display = 'block';
+    video.style.display = 'none';
+  } else {
+    video.src = src;
+    video.style.display = 'block';
+    img.style.display = 'none';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeMediaModal(e) {
+  const modal = document.getElementById('mediaModal');
+  const img = document.getElementById('modalImage');
+  const video = document.getElementById('modalVideo');
+
+  img.src = '';
+  video.src = '';
+  modal.style.display = 'none';
+}
+</script>
 
 </body>
 </html>
