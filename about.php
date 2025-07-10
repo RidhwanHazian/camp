@@ -1,7 +1,7 @@
 <?php
 include 'db_connection.php';
 $reviews = [];
-$sql = "SELECT f.*, u.username, p.package_name FROM feedback f JOIN users u ON f.user_id = u.user_id JOIN packages p ON f.package_id = p.package_id ORDER BY f.feedback_id DESC LIMIT 6";
+$sql = "SELECT f.*, u.username, p.package_name FROM feedback f JOIN users u ON f.user_id = u.user_id JOIN packages p ON f.package_id = p.package_id ORDER BY f.rating DESC, f.feedback_id DESC LIMIT 6";
 $result = $conn->query($sql);
 while ($row = $result->fetch_assoc()) {
     $reviews[] = $row;
@@ -17,6 +17,7 @@ if ($count_row = $count_result->fetch_assoc()) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - TasikBiruCamps</title>
@@ -24,6 +25,103 @@ if ($count_row = $count_result->fetch_assoc()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        .footer-socials-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+.footer-socials-row a {
+  color: #555;
+  font-size: 2.2rem;
+  transition: color 0.2s;
+}
+.footer-socials-row a:hover {
+  color: #28a745;
+}
+        .main-footer {
+  background: #222;
+  color: #fff;
+  margin-top: auto;
+  padding: 40px 0 0 0;
+  font-family: 'Poppins', sans-serif;
+}
+.footer-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  gap: 32px;
+}
+.footer-col {
+  flex: 1 1 180px;
+  min-width: 180px;
+  margin-bottom: 24px;
+}
+.footer-col h4 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: #c7b491;
+}
+.footer-col a, .footer-col p {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  margin-bottom: 8px;
+  font-size: 0.98rem;
+  transition: color 0.2s;
+}
+
+.footer-col a:hover {
+  color: #28a745;
+}
+.logo-col {
+  flex: 1 1 220px;
+  min-width: 220px;
+}
+.footer-logo {
+  width: 120px;
+  margin-bottom: 18px;
+}
+.footer-socials a {
+  color: #fff;
+  margin-right: 12px;
+  font-size: 1.3rem;
+  transition: color 0.2s;
+}
+.footer-socials a:hover {
+  color: #28a745;
+}
+.footer-bottom {
+  width: 100vw;
+  left: 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 18px 0 10px 0;
+  background: #181818;
+  color: #bbb;
+  font-size: 0.95rem;
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+@media (max-width: 900px) {
+  .footer-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .footer-col {
+    min-width: 0;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+}
         * {
             box-sizing: border-box;
         }
@@ -39,22 +137,24 @@ if ($count_row = $count_result->fetch_assoc()) {
             content: "";
             position: fixed;
             top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('homepageBackground.jpg');
+            width: 100vw;
+            height: 100vh;
+            background-image: url('Assets/aboutB.jpg');
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            image-rendering: auto;
             z-index: -2;
+            filter: none;
         }
         body::after {
             content: "";
             position: fixed;
             top: 0; left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.2); /* Lower opacity for clearer background */
             z-index: -1;
         }
         .hero-navbar-bg {
@@ -235,8 +335,9 @@ if ($count_row = $count_result->fetch_assoc()) {
             color: #fff;
             border-radius: 18px;
             padding: 24px;
-            max-width: 1100px;
-            margin: 60px auto 0 auto;
+            width: 80%;
+            max-width: 1200px;
+            margin: 60px auto 60px auto;
             text-align: center;
         }
         .team-section h2 {
@@ -404,18 +505,18 @@ if ($count_row = $count_result->fetch_assoc()) {
         }
         /* --- Our Story Animated Section --- */
         .our-story-section {
-            width: 100%;
-            max-width: 100%;
-            margin: 60px 0 0 0;
-            border-radius: 0 0 32px 32px;
+            width: 85%;
+            max-width: 1400px;
+            margin: 60px auto 0 auto;
+            border-radius: 40px;
             box-shadow: 0 8px 32px rgba(80,80,160,0.10);
             background: rgba(20,20,20,0.85) !important;
             display: flex;
             gap: 48px;
             align-items: stretch;
             flex-wrap: wrap;
-            padding-left: max(8vw, 16px);
-            padding-right: max(8vw, 16px);
+            padding-left: max(4vw, 16px);
+            padding-right: max(4vw, 16px);
             padding-top: 48px;
             padding-bottom: 32px;
             box-sizing: border-box;
@@ -428,12 +529,13 @@ if ($count_row = $count_result->fetch_assoc()) {
             flex: 1 1 350px;
             min-width: 280px;
             animation: fadeInLeft 1s;
+            max-height: 320px;
         }
         .our-story-img-card img {
             width: auto;
-            height: 100%;
+            height: 320px;
             max-width: 100%;
-            max-height: none;
+            max-height: 320px;
             display: block;
             border-radius: 18px;
             box-shadow: 0 4px 24px rgba(80,80,160,0.13);
@@ -446,7 +548,21 @@ if ($count_row = $count_result->fetch_assoc()) {
             animation: fadeInRight 1s;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #c7b491 #222;
+        }
+        .our-story-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .our-story-content::-webkit-scrollbar-thumb {
+            background: #c7b491;
+            border-radius: 8px;
+        }
+        .our-story-content::-webkit-scrollbar-track {
+            background: #222;
         }
         .our-story-content h2 {
             color: #fff !important;
@@ -482,7 +598,10 @@ if ($count_row = $count_result->fetch_assoc()) {
                 width: 100%;
                 height: auto;
                 max-width: 100%;
-                max-height: 320px;
+                max-height: 220px;
+            }
+            .our-story-content {
+                max-height: 220px;
             }
         }
         .navbar {
@@ -539,6 +658,7 @@ if ($count_row = $count_result->fetch_assoc()) {
             text-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
         .reviews-section {
+            width: 80%;
             max-width: 1200px;
             margin: 60px auto 0 auto;
         }
@@ -551,9 +671,10 @@ if ($count_row = $count_result->fetch_assoc()) {
         }
         .reviews-row {
             display: flex;
-            gap: 32px;
             flex-wrap: wrap;
-            justify-content: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 24px;
         }
         .review-card {
             background: #fff;
@@ -562,7 +683,10 @@ if ($count_row = $count_result->fetch_assoc()) {
             padding: 24px 20px 16px 20px;
             min-width: 280px;
             max-width: 340px;
-            flex: 1 1 280px;
+            flex: 1 1 calc(33.333% - 16px);
+            max-width: calc(33.333% - 16px);
+            min-width: 280px;
+            box-sizing: border-box;
             text-align: left;
             display: flex;
             flex-direction: column;
@@ -666,9 +790,14 @@ if ($count_row = $count_result->fetch_assoc()) {
             background: #000;
         }
         .location-section {
-            max-width: 900px;
+            width: 80%;
+            max-width: 1200px;
             margin: 40px auto 0 auto;
             text-align: center;
+            padding: 48px 0 48px 0;
+            min-height: 650px;
+            border-radius: 40px;
+            box-sizing: border-box;
         }
         .location-section h2 {
             color: #fff;
@@ -808,6 +937,9 @@ if ($count_row = $count_result->fetch_assoc()) {
             color: #1558b0;
         }
         .location-banner {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -815,8 +947,6 @@ if ($count_row = $count_result->fetch_assoc()) {
             border-radius: 18px;
             box-shadow: 0 4px 24px rgba(80,80,160,0.13);
             padding: 22px 36px;
-            max-width: 900px;
-            margin: 0 auto 24px auto;
             font-family: 'Poppins', 'Montserrat', Arial, sans-serif;
         }
         .location-banner-title {
@@ -918,6 +1048,13 @@ if ($count_row = $count_result->fetch_assoc()) {
         .hero {
             position: relative; /* Ensure .scroll-down-guide is positioned relative to .hero */
         }
+        .footer-ig-handle {
+  color: #555;
+  font-size: 1.1rem;
+  margin-left: 8px;
+  font-family: 'Poppins', sans-serif;
+  vertical-align: middle;
+}
     </style>
 </head>
 <body>
@@ -932,8 +1069,11 @@ if ($count_row = $count_result->fetch_assoc()) {
     </nav>
     <div class="hero">
         <h1 class="font_0 wixui-rich-text__text" style="text-align:center; font-size:100px; font-family:'Times New Roman', serif;">About TasikBiruCamps</h1>
-        <p>We are passionate about creating unforgettable outdoor experiences.</p>
-        <p>Our mission is to connect people with nature, foster community, and inspire adventure in the heart of Malaysia's beautiful landscapes.</p>
+        <p>
+  We are passionate about creating unforgettable outdoor experiences that bring people closer to nature and to each other.<br>
+  At TasikBiru Camps, we offer comfort, adventure, and serenity all in one place.<br>
+  Every moment is thoughtfully crafted to inspire connection, relaxation, and lasting memories.
+</p>
         <a href="campsites.php" class="cta-btn">Explore Our Campsites</a>
         <div class="scroll-down-guide" onclick="scrollToAboutSection()">
             <div class="arrow"></div>
@@ -945,11 +1085,14 @@ if ($count_row = $count_result->fetch_assoc()) {
         </div>
         <div class="our-story-content">
             <h2>Our Story</h2>
-            <p>TasikBiruCamps was founded in 2018 by a group of passionate nature lovers and outdoor experts who wanted to make camping accessible, safe, and fun for everyone. Frustrated by the lack of easy booking and quality facilities, we set out to create a platform that connects people with the best camping experiences in Malaysia.</p>
-            <p>Today, TasikBiruCamps partners with beautiful campsites, offers a variety of adventure packages, and brings together a vibrant community of campers, families, and explorers. Our mission is to inspire more people to experience the magic of nature, build friendships, and create memories that last a lifetime.</p>
+            <p>TasikBiruCamps was founded in 2018 by a group of passionate nature enthusiasts, educators, and outdoor adventure experts with a shared vision: to make camping in Malaysia not only more accessible, but also safer, more meaningful, and more enjoyable for people of all ages. Inspired by the breathtaking beauty of Tasik Biru and frustrated by the lack of structured outdoor experiences, we saw an opportunity to transform the way people experience nature.</p>
+            <p>From humble beginnings, TasikBiruCamps has grown into a trusted platform that connects adventurers, families, students, and organizations with curated, high-quality camping experiences in one of Malaysia’s most serene and picturesque destinations. We believe that nature is a powerful teacher capable of building confidence, strengthening teamwork, and inspiring self-discovery. That belief is at the heart of every program and package we design.</p>
+            <p>Today, TasikBiruCamps proudly partners with carefully selected campsite operators and outdoor facilitators to offer a variety of adventure-filled and educational packages. These include team-building activities, water-based challenges, survival skills training, leadership development, and much more all conducted in a safe and supportive environment.</p>
+            <p>Our mission is to inspire more people to reconnect with nature, form meaningful bonds, and create unforgettable memories. Whether you're a student attending a school camp, a company team looking to recharge, or a family craving an outdoor getaway, TasikBiruCamps welcomes you to discover the beauty, thrill, and tranquility of the outdoors right here at Kem Tasik Biru.</p>
+            <p>Let us guide you on your next adventure, and together, we’ll make every moment count under the open sky.</p>
         </div>
     </div>
-    <div class="location-section" style="max-width:900px;margin:40px auto 0 auto;text-align:center;">
+    <div class="location-section">
         <h2 style="color:#fff;font-size:2rem;font-weight:700;margin-bottom:18px;">Our Location</h2>
         <div class="location-banner">
             <div>
@@ -972,7 +1115,7 @@ if ($count_row = $count_result->fetch_assoc()) {
                 </a>
             </div>
         </div>
-        <div id="customMap" style="width:100%;height:350px;border-radius:16px;box-shadow:0 4px 24px rgba(80,80,160,0.13);margin:0 auto;"></div>
+        <div id="customMap" style="width:100%;height:550px;border-radius:24px;box-shadow:0 4px 24px rgba(80,80,160,0.13);margin:0 auto;"></div>
     </div>
     <div class="reviews-section" id="reviews-section">
         <h2 class="reviews-title">What Our Campers Say</h2>
@@ -1083,5 +1226,42 @@ if ($count_row = $count_result->fetch_assoc()) {
         document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' });
     }
     </script>
+    
+    <!-- Removed duplicate footer here -->
+    
+    <footer class="main-footer">
+  <div class="footer-socials-row">
+    <span class="footer-logo-inline" style="width:auto;height:40px;background:#c7b491;color:#222;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:bold;font-size:1.3rem;padding:0 24px 0 24px;margin-right:24px;">TasikBiru</span>
+    <a href="https://www.facebook.com/kemtasikbirumelaka" target="_blank"><i class="fab fa-facebook-f"></i></a>
+    <a href="https://www.tiktok.com/@kemtasikbiruofficial" target="_blank"><i class="fab fa-tiktok"></i></a>
+    <a href="https://instagram.com/kemtasikbiru" target="_blank"><i class="fab fa-instagram"></i></a>
+    <span class="footer-ig-handle">@kemtasikbiru</span>
+  </div>
+  <div class="footer-container">
+    <div class="footer-col logo-col">
+      <!-- Logo removed from here -->
+    </div>
+    <div class="footer-col">
+      <h4>Links</h4>
+      <a href="about.php">About Us</a>
+      <a href="campsites.php">Campsites</a>
+      <a href="login.php">Login</a>
+      <a href="register.php">Register</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <p><i class="fas fa-envelope" style="margin-right:8px;"></i>info@tasikbirucamps.com</p>
+      <p><i class="fas fa-phone" style="margin-right:8px;"></i>012-2252945</p>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#">Terms & Conditions</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; 2025 TasikBiru Camps. All rights reserved.
+  </div>
+</footer>
 </body>
 </html>
