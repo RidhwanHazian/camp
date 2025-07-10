@@ -210,7 +210,15 @@ $schedule_result = $conn->query($schedule_query);
   <a href="admin_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
   <a href="manage_bookings.php"><i class="fas fa-calendar-check"></i> Manage Bookings</a>
   <a href="manage_campsites.php"><i class="fas fa-campground"></i> Manage Packages</a>
-  <a href="manage_staff.php" class ="active"><i class="fas fa-users"></i> Manage Staff</a>
+  <a href="manage_staff.php" class="active"><i class="fas fa-users"></i> Manage Staff</a>
+
+  <div style="margin: 0.1rem 0; border-top: 1px solid #7f8c8d;"></div>
+  <div class="section-label">Manage staff sidebar</div>
+  <a href="#staff-section" class="sub-link"><i class="fas fa-user"></i> Staff List</a>
+  <a href="#schedule-section" class="sub-link"><i class="fas fa-clock"></i> Staff Schedule</a>
+  <a href="#facility-section" class="sub-link"><i class="fas fa-building"></i> Facilities</a>
+
+  <div style="margin: 0.1rem 0; border-top: 1px solid #7f8c8d;"></div>
   <a href="manage_feedback.php"><i class="fas fa-comments"></i> Feedback Customer</a>
   <a href="customer_payment.php"><i class="fas fa-credit-card"></i> Customer Payment</a>
   <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');">
@@ -222,12 +230,16 @@ $schedule_result = $conn->query($schedule_query);
   <h1>Manage Staff</h1>
 
   <!-- Staff Section -->
-  <div id="staff-section" class="section-header">
-    <form class="search-box" method="GET" action="">
-      <input type="text" name="search_staff" placeholder="Search staff..." value="<?php echo isset($_GET['search_staff']) ? htmlspecialchars($_GET['search_staff']) : ''; ?>">
-    </form>
-    <a class="add-button" href="add_staff.php">+ Add New Staff</a>
+  <div id="staff-section" style="margin-bottom: 1rem;">
+    <h2 style="margin-bottom: 16px;">Staff List</h2>
+    <div class="section-header">
+      <form class="search-box" method="GET" action="">
+        <input type="text" name="search_staff" placeholder="Search staff..." value="<?php echo isset($_GET['search_staff']) ? htmlspecialchars($_GET['search_staff']) : ''; ?>">
+      </form>
+      <a class="add-button" href="add_staff.php">+ Add New Staff</a>
+    </div>
   </div>
+
 
   <div class="table-container">
     <table>
@@ -275,11 +287,14 @@ $schedule_result = $conn->query($schedule_query);
   </div>
 
   <!-- Schedule Section -->
-  <div id="schedule-section" class="section-header">
-    <form class="search-box" method="GET" action="">
-      <input type="text" name="search_schedule" placeholder="Search schedule (staff, customer, or status)..." value="<?php echo isset($_GET['search_schedule']) ? htmlspecialchars($_GET['search_schedule']) : ''; ?>">
-    </form>
-    <a class="add-button" href="add_schedule.php">+ Add Schedule</a>
+  <div id="schedule-section" style="margin-bottom: 1rem;">
+    <h2 style="margin-bottom: 16px;">Staff Schedule</h2>
+    <div class="section-header">
+      <form class="search-box" method="GET" action="">
+        <input type="text" name="search_schedule" placeholder="Search schedule" value="<?php echo isset($_GET['search_schedule']) ? htmlspecialchars($_GET['search_schedule']) : ''; ?>">
+      </form>
+      <a class="add-button" href="add_schedule.php">+ Add Schedule</a>
+    </div>
   </div>
 
   <div class="table-container">
@@ -320,12 +335,15 @@ $schedule_result = $conn->query($schedule_query);
     </table>
   </div>
 
-  <!-- Assign Facilities Section -->
-  <div id="facility-section" class="section-header">
-    <form class="search-box" method="GET" action="">
-      <input type="text" name="search_facility" placeholder="Search facility assignments..." value="<?php echo isset($_GET['search_facility']) ? htmlspecialchars($_GET['search_facility']) : ''; ?>">
-    </form>
-    <a class="add-button" href="assign_facilities.php">+ Assign Facilities</a>
+  <!-- Assign Facilities Secti-->
+  <div id="facility-section" style="margin-bottom: 1rem;">
+    <h2 style="margin-bottom: 16px;">Facility Assignment</h2>
+    <div class="section-header">
+      <form class="search-box" method="GET" action="">
+        <input type="text" name="search_facility" placeholder="Search facility assignments..." value="<?php echo isset($_GET['search_facility']) ? htmlspecialchars($_GET['search_facility']) : ''; ?>">
+      </form>
+      <a class="add-button" href="assign_facilities.php">+ Assign Facilities</a>
+    </div>
   </div>
 
   <div class="table-container">
