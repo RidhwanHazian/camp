@@ -3,6 +3,9 @@
   include 'db_connection.php';
   include 'session_check.php';        // Load session check functions
   checkAdminSession(); 
+
+  $startDate = $_GET['start_date'] ?? null;
+  $endDate = $_GET['end_date'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -143,6 +146,47 @@
 
 <div class="content">
   <h1>Customer Payments</h1>
+
+  <!-- Button to print PDF report for this month -->
+  <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+    <form method="get" action="customer_payment.php" style="display: flex; align-items: center; gap: 10px;">
+      <input type="date" name="start_date" id="start_date"
+            value="<?= isset($_GET['start_date']) ? $_GET['start_date'] : '' ?>"
+            style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;" required>
+
+      <span>to</span>
+
+      <input type="date" name="end_date" id="end_date"
+            value="<?= isset($_GET['end_date']) ? $_GET['end_date'] : '' ?>"
+            style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;" required>
+
+      <button type="submit"
+              style="padding: 8px 14px; background-color: #2980b9; color: white; border: none; border-radius: 6px;">
+        Filter
+      </button>
+    </form>
+
+    <?php if (isset($_GET['start_date']) && isset($_GET['end_date'])): ?>
+      <a href="customer_payment.php"
+        style="padding: 8px 14px; background-color: #c0392b; color: white; border-radius: 6px; text-decoration: none;">
+        Clear Filter
+      </a>
+
+      <form method="get" action="generate_payment_report.php" style="display: inline;">
+        <input type="hidden" name="start_date" value="<?= htmlspecialchars($_GET['start_date']) ?>">
+        <input type="hidden" name="end_date" value="<?= htmlspecialchars($_GET['end_date']) ?>">
+        <button type="submit"
+                style="padding: 8px 14px; background-color: #27ae60; color: white; border-radius: 6px; border: none;">
+          <i class="fas fa-file-pdf"></i> Print PDF
+        </button>
+      </form>
+    <?php endif; ?>
+  </div>
+
+  <?php if ($startDate && $endDate): ?>
+    <p>Showing results from <strong><?= htmlspecialchars($startDate) ?></strong> to <strong><?= htmlspecialchars($endDate) ?></strong></p>
+  <?php endif; ?>
+
   <div class="table-container">
     <table>
     <thead>
@@ -157,22 +201,34 @@
     </thead>
       <tbody>
         <?php
-        // Connect to database
-        include 'db_connection.php';
-
-        $sql = "
+        if ($startDate && $endDate) {
+          $sql = "
             SELECT 
-                b.full_name,
-                b.phone_no,
-                b.package_id,
-                pk.package_name,
-                p.payment_date,
-                p.amount
+              b.full_name,
+              b.phone_no,
+              pk.package_name,
+              p.payment_date,
+              p.amount
+            FROM payments p
+            JOIN bookings b ON p.booking_id = b.booking_id
+            JOIN packages pk ON b.package_id = pk.package_id
+            WHERE DATE(p.payment_date) BETWEEN '$startDate' AND '$endDate'
+            ORDER BY p.payment_date DESC
+          ";
+        } else {
+          $sql = "
+            SELECT 
+              b.full_name,
+              b.phone_no,
+              pk.package_name,
+              p.payment_date,
+              p.amount
             FROM payments p
             JOIN bookings b ON p.booking_id = b.booking_id
             JOIN packages pk ON b.package_id = pk.package_id
             ORDER BY p.payment_date DESC
-        ";
+          ";
+        }
 
         $result = mysqli_query($conn, $sql);
 
