@@ -1055,6 +1055,41 @@ if ($count_row = $count_result->fetch_assoc()) {
   font-family: 'Poppins', sans-serif;
   vertical-align: middle;
 }
+    /* Centered logo above footer, with extra margin below */
+    .footer-main-logo {
+      display: block;
+      margin: 0 auto 36px auto;
+      width: 180px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(80,80,160,0.10);
+      background: #fff;
+      object-fit: contain;
+    }
+    .footer-socials-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      margin-bottom: 24px;
+    }
+    .logo-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 220px;
+      max-width: 260px;
+    }
+    .footer-main-logo {
+      width: 170px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(80,80,160,0.10);
+      background: #fff;
+      object-fit: contain;
+      margin: 0 auto;
+      display: block;
+    }
     </style>
 </head>
 <body>
@@ -1230,38 +1265,38 @@ if ($count_row = $count_result->fetch_assoc()) {
     <!-- Removed duplicate footer here -->
     
     <footer class="main-footer">
-  <div class="footer-socials-row">
-    <span class="footer-logo-inline" style="width:auto;height:40px;background:#c7b491;color:#222;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:bold;font-size:1.3rem;padding:0 24px 0 24px;margin-right:24px;">TasikBiru</span>
-    <a href="https://www.facebook.com/kemtasikbirumelaka" target="_blank"><i class="fab fa-facebook-f"></i></a>
-    <a href="https://www.tiktok.com/@kemtasikbiruofficial" target="_blank"><i class="fab fa-tiktok"></i></a>
-    <a href="https://instagram.com/kemtasikbiru" target="_blank"><i class="fab fa-instagram"></i></a>
-    <span class="footer-ig-handle">@kemtasikbiru</span>
-  </div>
-  <div class="footer-container">
-    <div class="footer-col logo-col">
-      <!-- Logo removed from here -->
-    </div>
-    <div class="footer-col">
-      <h4>Links</h4>
-      <a href="about.php">About Us</a>
-      <a href="campsites.php">Campsites</a>
-      <a href="login.php">Login</a>
-      <a href="register.php">Register</a>
-    </div>
-    <div class="footer-col">
-      <h4>Contact</h4>
-      <p><i class="fas fa-envelope" style="margin-right:8px;"></i>info@tasikbirucamps.com</p>
-      <p><i class="fas fa-phone" style="margin-right:8px;"></i>012-2252945</p>
-    </div>
-    <div class="footer-col">
-      <h4>Legal</h4>
-      <a href="#">Terms & Conditions</a>
-      <a href="#">Privacy Policy</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    &copy; 2025 TasikBiru Camps. All rights reserved.
-  </div>
-</footer>
+        <div class="footer-container">
+            <div class="footer-col logo-col">
+                <img src="Assets/logoTasik.jpg" alt="TasikBiru Logo" class="footer-main-logo">
+            </div>
+            <div class="footer-col">
+                <h4>Links</h4>
+                <a href="about.php">About Us</a>
+                <a href="campsites.php">Campsites</a>
+                <a href="login.php">Login</a>
+                <a href="register.php">Register</a>
+            </div>
+            <div class="footer-col">
+                <h4>Contact</h4>
+                <p><i class="fas fa-envelope" style="margin-right:8px;"></i>info@tasikbirucamps.com</p>
+                <p><i class="fas fa-phone" style="margin-right:8px;"></i>012-2252945</p>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <a href="#">Terms & Conditions</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+        </div>
+        <div class="footer-socials-row">
+            <span class="footer-logo-inline" style="width:auto;height:40px;background:#c7b491;color:#222;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:bold;font-size:1.3rem;padding:0 24px 0 24px;margin-right:24px;">TasikBiru</span>
+            <a href="https://www.facebook.com/kemtasikbirumelaka" target="_blank"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://www.tiktok.com/@kemtasikbiruofficial" target="_blank"><i class="fab fa-tiktok"></i></a>
+            <a href="https://instagram.com/kemtasikbiru" target="_blank"><i class="fab fa-instagram"></i></a>
+            <span class="footer-ig-handle">@kemtasikbiru</span>
+        </div>
+      <div class="footer-bottom">
+        &copy; 2025 TasikBiru Camps. All rights reserved.
+      </div>
+    </footer>
 </body>
 </html>
