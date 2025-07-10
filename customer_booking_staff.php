@@ -25,7 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_payment'])) {
             WHERE payment_id = ? AND booking_id = ?
         ");
         $staff_id_for_verification = $_SESSION['staff_id'];
-        $new_status = $status_note ? $status_note : 'confirmed';
+        if (!$status_note) {
+            throw new Exception("Payment status must be selected.");
+        }
+        $new_status = $status_note;
         $update_payment->bind_param("ssii", $staff_id_for_verification, $new_status, $payment_id, $booking_id);
         $update_payment->execute();
 
@@ -148,282 +151,320 @@ try {
     <title>Customer Bookings - Staff Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { display: flex; background-color: #f0f2f5; }
-    .sidebar {
-            width: 250px; 
-            background-color: #6f74c6; 
-            color: white; 
-            padding: 40px 20px; 
-      height: 100vh;
-      position: fixed;
-    }
-    .sidebar h2 {
-            font-size: 48px; 
-            margin-bottom: 40px; 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-    }
-    .sidebar a {
-            display: flex; 
-            align-items: center;
-            gap: 10px;
-            color: white; 
-            font-weight: bold; 
-            font-size: 26px; 
-      text-decoration: none;
-            margin-bottom: 25px; 
-            padding: 12px 20px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-    }
-    .sidebar a:hover {
-            background-color: #343795;
-            transform: translateX(10px);
-    }
-        .sidebar a.active { 
-            background-color: #343795;
+        * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
         }
-        .main { 
-            flex-grow: 1; 
-            padding: 30px;
-            margin-left: 250px;
+
+        body {
+        display: flex;
+        background-color: #f0f2f5;
         }
+
+        /* SIDEBAR */
+        .sidebar {
+        width: 250px;
+        background-color: #6f74c6;
+        color: white;
+        padding: 40px 20px;
+        height: 100vh;
+        position: fixed;
+        }
+        .sidebar h2 {
+        font-size: 48px;
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        }
+        .sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+        font-weight: bold;
+        font-size: 26px;
+        text-decoration: none;
+        margin-bottom: 25px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+        background-color: #343795;
+        transform: translateX(10px);
+        }
+
+        /* MAIN */
+        .main {
+        flex-grow: 1;
+        padding: 30px;
+        margin-left: 250px;
+        }
+
+        /* ALERTS */
         .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
         }
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
         }
         .alert-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
         }
+
+        /* TABLE */
         .table-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-top: 20px;
-            overflow-x: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-top: 20px;
+        overflow-x: auto;
         }
         table {
-      width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            white-space: nowrap;
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        white-space: nowrap;
         }
         th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-            vertical-align: center;
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle;
         }
         th {
-            background-color: #6f74c6;
-            color: white;
-            position: sticky;
-            top: 0;
-    }
-        tr:hover {
-            background-color: #f5f5f5;
+        background-color: #6f74c6;
+        color: white;
+        position: sticky;
+        top: 0;
         }
+        tr:hover {
+        background-color: #f5f5f5;
+        }
+
+        /* STATUS & BADGES */
         .status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+        text-transform: capitalize;
+        }
+        .total-price {
+        font-weight: bold;
+        color: #2ecc71;
+        font-size: 1.1em;
+        }
+        .status-unpaid {
+        background-color: #fab1a0;
+        color: #8B0000;
+        }
+        .status-paid {
+        background-color: #55efc4;
+        color: #006400;
+        }
+
+        /* PAYMENT STATUS */
+        .payment-status {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+        text-transform: capitalize;
+        display: inline-block;
+        margin-bottom: 10px;
+        }
+        .payment-status.status-pending {
+        background-color: #ffe5e5;
+        color: #c0392b;
+        font-weight: bold;
+        border: 1px solid #e74c3c;
+        }
+        .payment-status.status-paid {
+        background-color: #74b9ff;
+        color: #00008B;
+        }
+        .payment-status.status-verified {
+        background-color: #55efc4;
+        color: #006400;
+        }
+
+        /* BADGE STATUS (BOOKING STATUS) */
+        .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 1em;
+        font-weight: 600;
+        border-radius: 16px;
+        padding: 7px 18px;
+        margin-top: 6px;
+        box-shadow: 0 2px 8px rgba(80,80,160,0.08);
+        letter-spacing: 0.5px;
+        transition: background 0.2s, color 0.2s;
+        }
+        .status-badge.status-complete {
+        background: linear-gradient(90deg, #e0ffe7 60%, #d4fcf7 100%);
+        color: #219150;
+        border: 1.5px solid #27ae60;
+        }
+        .status-badge.status-paid {
+        background: linear-gradient(90deg, #e0f7fa 60%, #e0e7ff 100%);
+        color: #00796b;
+        border: 1.5px solid #00bfae;
+        }
+        .status-badge.status-pending {
+        background: linear-gradient(90deg, #fffbe0 60%, #ffeaa7 100%);
+        color: #bfa600;
+        border: 1.5px solid #f39c12;
+        }
+        .status-badge.status-not\ complete {
+        background: linear-gradient(90deg, #ffe0e0 60%, #ffe7e7 100%);
+        color: #c0392b;
+        border: 1.5px solid #e74c3c;
+        }
+
+        /* BUTTONS */
+        .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        white-space: nowrap;
+        justify-content: flex-start;
+        }
+        .btn, .verify-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        text-decoration: none;
+        color: white;
+        font-size: 0.9em;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-weight: bold;
+        height: 36px;
+        line-height: 20px;
+        }
+        .btn:hover:not(:disabled),
+        .verify-btn:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        }
+        .btn-edit {
+        background-color: #3498db;
+        }
+        .btn-delete {
+        background-color: #e74c3c;
+        }
+        .verify-btn {
+        background-color: #27ae60;
+        }
+        .verify-btn:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none;
+        }
+        .verify-btn:not(:disabled):hover {
+        background-color: #219a52;
+        }
+
+        /* INPUTS & SEARCH */
+        .search-box {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        }
+        .search-box input {
+        padding: 10px;
+        width: 300px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        font-size: 1em;
+        }
+        .filter-box {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        }
+        .filter-box select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        font-size: 1em;
+        }
+
+        /* INFO SECTIONS */
+        .customer-info {
+        font-size: 0.9em;
+        color: #666;
+        }
+        .package-info {
+        font-size: 0.9em;
+        color: #2d3436;
+        }
+        .price {
+        font-weight: bold;
+        color: #2ecc71;
+        }
+        .payment-info {
+        font-size: 0.85em;
+        color: #666;
+        margin-top: 5px;
+        }
+        .payment-info i {
+        width: 16px;
+        margin-right: 5px;
+        }
+        .receipt-link {
+        color: #2980b9;
+        text-decoration: none;
+        font-size: 0.9em;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        }
+        .receipt-link:hover {
+        text-decoration: underline;
+        }
+        .status-current {
+            background-color: #ffe5e5;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+            font-weight: bold;
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 0.9em;
-            font-weight: bold;
-            text-transform: capitalize;
-        }
-        .status-pending { 
-            background-color: #ffeaa7; 
-            color: #8B7355; 
-        }
-        .status-paid { 
-            background-color: #55efc4; 
-            color: #006400; 
-        }
-        .status-unpaid { 
-            background-color: #fab1a0; 
-            color: #8B0000; 
-        }
-        .total-price {
-            font-weight: bold;
-            color: #2ecc71;
-            font-size: 1.1em;
-    }
-        .actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            white-space: nowrap;
-            justify-content: flex-start;
-        }
-        .btn, .verify-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-      text-decoration: none;
-            color: white;
-            font-size: 0.9em;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: bold;
-            height: 36px;
-            line-height: 20px;
-        }
-        .btn i, .verify-btn i {
-            font-size: 0.9em;
-        }
-        .btn:hover:not(:disabled), .verify-btn:hover:not(:disabled) {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        .btn-edit { 
-            background-color: #3498db; 
-        }
-        .btn-delete { 
-            background-color: #e74c3c; 
-        }
-        .verify-btn {
-            background-color: #27ae60;
-        }
-        .verify-btn:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-            opacity: 0.7;
-            transform: none;
-        }
-        .verify-btn:not(:disabled):hover {
-            background-color: #219a52;
-        }
-        .search-box {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .search-box input {
-            padding: 10px;
-            width: 300px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 1em;
-        }
-        .filter-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .filter-box select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 1em;
-        }
-        .customer-info {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .package-info {
-            font-size: 0.9em;
-            color: #2d3436;
-        }
-        .price {
-            font-weight: bold;
-            color: #2ecc71;
-        }
-        .payment-status {
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
-      font-weight: bold;
             text-transform: capitalize;
             display: inline-block;
-            margin-bottom: 10px;
         }
-        .status-pending { 
-            background-color: #ffeaa7; 
-            color: #8B7355; 
+
+        .status-badge.status-current {
+            background: linear-gradient(90deg, #ffe0e0 60%, #ffe7e7 100%) !important;
+            color: #c0392b !important;
+            border: 1.5px solid #e74c3c !important;
         }
-        .status-paid { 
-            background-color: #74b9ff; 
-            color: #00008B; 
-        }
-        .status-verified { 
-            background-color: #55efc4; 
-            color: #006400; 
-        }
-        .payment-info {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
-        }
-        .payment-info i {
-            width: 16px;
-            margin-right: 5px;
-        }
-        .receipt-link {
-            color: #2980b9;
-            text-decoration: none;
-            font-size: 0.9em;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .receipt-link:hover {
-            text-decoration: underline;
-        }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 1em;
-            font-weight: 600;
-            border-radius: 16px;
-            padding: 7px 18px;
-            margin-top: 6px;
-            box-shadow: 0 2px 8px rgba(80,80,160,0.08);
-            background: linear-gradient(90deg, #f8fafc 60%, #e0e7ff 100%);
-            color: #444;
-            letter-spacing: 0.5px;
-            transition: background 0.2s, color 0.2s;
-        }
-        .status-badge.status-complete {
-            background: linear-gradient(90deg, #e0ffe7 60%, #d4fcf7 100%);
-            color: #219150;
-            border: 1.5px solid #27ae60;
-        }
-        .status-badge.status-paid {
-            background: linear-gradient(90deg, #e0f7fa 60%, #e0e7ff 100%);
-            color: #00796b;
-            border: 1.5px solid #00bfae;
-        }
-        .status-badge.status-pending {
-            background: linear-gradient(90deg, #fffbe0 60%, #ffeaa7 100%);
-            color: #bfa600;
-            border: 1.5px solid #f39c12;
-        }
-        .status-badge.status-not\ complete {
-            background: linear-gradient(90deg, #ffe0e0 60%, #ffe7e7 100%);
-            color: #c0392b;
-            border: 1.5px solid #e74c3c;
-        }
-  </style>
+    </style>
 </head>
 <body>
   <div class="sidebar">
         <h2><i class="fas fa-user-shield"></i> Staff</h2>
         <a href="staff_dashboard.php"><i class="fas fa-home"></i> Dashboard</a>
-        <a href="customer_booking_staff.php" class="active"><i class="fas fa-file-invoice-dollar"></i> Payment Verification</a>
+        <a href="customer_booking_staff.php" class="active"><i class="fas fa-calendar-check"></i> Payment Verification</a>
         <a href="package_detail_staff.php"><i class="fas fa-box"></i> Package Details</a>
         <a href="timetable_staff.php"><i class="fas fa-clock"></i> Timetable</a>
         <a href="logout.php" onclick="return confirm('Are you sure you want to logout?');"><i class="fas fa-sign-out-alt"></i> Log Out</a>
@@ -502,7 +543,8 @@ try {
                             ?>
                         </td>
                         <td style="vertical-align:top; min-width:270px;">
-                            <span class="payment-status status-<?php echo htmlspecialchars($booking['payment_status']); ?>">
+                            <?php $normalizedStatus = strtolower(trim($booking['payment_status'])); ?>
+                            <span class="payment-status status-<?php echo htmlspecialchars($normalizedStatus); ?>">
                                 <?php 
                                     switch($booking['payment_status']) {
                                         case 'verified':
@@ -558,23 +600,28 @@ try {
                             </div>
                         </td>
                         <td style="text-align:center; vertical-align:middle;">
-                            <span class="status-badge status-<?php echo htmlspecialchars($booking['status']); ?>">
-                                <?php 
-                                    switch($booking['status']) {
-                                        case 'complete':
-                                            echo '<i class="fas fa-check-circle"></i> Complete';
-                                            break;
-                                        case 'paid':
-                                            echo '<i class="fas fa-money-bill-wave"></i> Paid';
-                                            break;
-                                        case 'not complete':
-                                            echo '<i class="fas fa-exclamation-circle"></i> Not Complete';
-                                            break;
-                                        case 'pending':
-                                        default:
-                                            echo '<i class="fas fa-hourglass-half"></i> Pending';
-                                    }
-                                ?>
+                            <?php
+                                $statusRaw = $booking['status'];
+                                $status = strtolower(trim($statusRaw));
+                                $paidAmount = floatval($booking['paid_amount']);
+                                $totalAmount = floatval($booking['total_price']);
+
+                                if ($status === 'complete') {
+                                    $statusClass = 'status-badge status-complete';
+                                    $statusLabel = '<i class="fas fa-check-circle"></i> Complete';
+                                } elseif ($status === 'not complete') {
+                                    $statusClass = 'status-badge status-current';
+                                    $statusLabel = '<i class="fas fa-exclamation-circle"></i> Not Complete';
+                                } elseif ($paidAmount >= $totalAmount && $paidAmount > 0) {
+                                    $statusClass = 'status-badge status-paid';
+                                    $statusLabel = '<i class="fas fa-money-bill-wave"></i> Paid';
+                                } else {
+                                    $statusClass = 'status-badge status-current';
+                                    $statusLabel = '<i class="fas fa-hourglass-half"></i> Pending';
+                                }
+                            ?>
+                            <span class="<?php echo $statusClass; ?>">
+                                <?php echo $statusLabel; ?>
                             </span>
                         </td>
                     </tr>
