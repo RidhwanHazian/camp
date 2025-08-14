@@ -34,3 +34,12 @@ This included:
 - **Frontend:** HTML5, CSS3, JavaScript
 - **Database:** MySQL (via XAMPP)
 - **Additional Tools:** Chart.js, AJAX for live search and dynamic updates
+- **Dependency Management:** Composer (PHP)
+
+---
+
+## 📂 Installation & Setup
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/RidhwanHazian/camp.git
