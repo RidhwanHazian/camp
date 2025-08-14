@@ -38,6 +38,25 @@ This included:
 
 ---
 
+## 📥 Download & Install Composer
+
+This project uses **Composer** to manage PHP libraries.  
+If you don’t already have Composer installed, follow these steps:
+
+1. Go to the official Composer download page:  
+   👉 [https://getcomposer.org/download/](https://getcomposer.org/download/)
+
+2. Download the **Composer-Setup.exe** for Windows.
+
+3. Run the installer and follow the prompts:
+   - Select your PHP installation path (e.g., `C:\xampp\php\php.exe`).
+   - Keep default settings for the rest.
+
+4. After installation, verify Composer is installed by running in Command Prompt:
+   ```bash
+   composer -V
+
+   
 ## 📂 Installation & Setup
 
 ### 1. Clone the repository
