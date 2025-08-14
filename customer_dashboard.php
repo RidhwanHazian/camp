@@ -94,7 +94,7 @@ checkCustomerSession();
     <div class="activity-title">Perkemahan</div>
   </div>
   <div class="activity-card">
-    <img src="https://images.unsplash.com/photo-1572457089126-2d31444e48c9" alt="Kayak">
+    <img src="https://images.unsplash.com/photo-1480480565647-1c4385c7c0bf" alt="Kayak">
     <div class="activity-title">Kayak</div>
   </div>
   <div class="activity-card">

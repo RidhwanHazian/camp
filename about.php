@@ -941,7 +941,7 @@ if ($count_row = $count_result->fetch_assoc()) {
     </div>
     <div class="our-story-section" id="about-section">
         <div class="our-story-img-card">
-            <img src="ourStoryBackground.jpg" alt="TasikBiruCamps Nature" />
+            <img src="Assets/ourStoryBackground.jpg" alt="TasikBiruCamps Nature" >
         </div>
         <div class="our-story-content">
             <h2>Our Story</h2>
