@@ -1,6 +1,6 @@
 # Tasik Biru Camps Reservation System
 
-This repository contains the complete source code for the **Tasik Biru Camps Reservation System**, developed as part of a **UiTM ISP250 group project** (Semester March–August 2025, Group CS1104D).
+This repository contains the complete source code for the **Tasik Biru Camps Reservation System**, developed as part of a **UiTM ISP250 and CSC264 group project** (Semester March–August 2025, Group CS1104D).
 
 While this repository includes all modules (Customer, Staff, Admin), my personal contribution to the project was the **development of the Admin Module** — including both backend logic and frontend interface.
 
