@@ -43,7 +43,7 @@ As part of the group collaboration, my responsibilities included:
 
 ## 📥 Download & Install Composer
 
-This project uses **Composer** to manage PHP libraries.  
+This project uses **Composer** to manage PHP libraries and mainly used to send emails using PHPMailer.  
 If you don’t already have Composer installed, follow these steps:
 
 1. Go to the official Composer download page:  
@@ -61,34 +61,8 @@ If you don’t already have Composer installed, follow these steps:
 
 
    
-📂 Installation & Setup
-1. Clone the repository
-git clone https://github.com/RidhwanHazian/camp.git
+## 📂 Installation & Setup
 
-2. Move the project to XAMPP's htdocs directory
-C:\xampp\htdocs\camp
-
-3. Import the database
-
-Open phpMyAdmin
-
-Create a new database (e.g., tasikbirucamps)
-
-Import the provided .sql file from the database/ folder
-
-4. Install PHP dependencies
-composer install
-
-5. Run the project
-
-Start Apache and MySQL in XAMPP
-
-Open in browser:
-
-http://localhost/camp
-
-📸 Screenshots & Demo
-
-Portfolio Page: View Portfolio
-
-Live Demo Video: Google Drive Link
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/RidhwanHazian/camp.git
