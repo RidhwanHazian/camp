@@ -2,7 +2,7 @@
 
 This repository contains the complete source code for the **Tasik Biru Camps Reservation System**, developed as part of a **UiTM ISP250 and CSC264 group project** (Semester March–August 2025, Group CS1104D).
 
-While this repository includes all modules (Customer, Staff, Admin), my personal contribution to the project was the **development of the Admin Module** — including both backend logic and frontend interface.
+While this repository includes all modules (Customer, Staff, Admin), my personal contribution to the project was the **development of the Admin Module** — including both backend logic and frontend interface — as well as implementing the **staff-side email sending functionality**.
 
 ---
 
@@ -13,11 +13,11 @@ It allows customers to book packages, staff to manage operations, and administra
 
 ---
 
-## 👤 My Role: Admin Module Developer
+## 👤 My Role & Contributions
 
-As part of the group collaboration, my responsibility was to design, develop, and integrate the **Admin Module**.  
-This included:
+As part of the group collaboration, my responsibilities included:
 
+### **Admin Module Development**
 - **Admin Authentication** – Secure login for administrators.
 - **Booking Management** – View, search, edit, and delete reservations.
 - **Package Management** – Add, edit, delete packages; manage slots and images.
@@ -26,6 +26,9 @@ This included:
 - **Payment Management** – Track and filter payment records; generate PDF summaries.
 - **Analytics** – Visual charts using Chart.js for revenue and booking distribution.
 
+### **Staff Module Contribution**
+- **Email Sending Feature** – Implemented automated email notifications for staff operations using PHPMailer.
+
 ---
 
 ## 🛠 Technology Stack
@@ -33,7 +36,7 @@ This included:
 - **Backend:** PHP (MySQLi)
 - **Frontend:** HTML5, CSS3, JavaScript
 - **Database:** MySQL (via XAMPP)
-- **Additional Tools:** Chart.js, AJAX for live search and dynamic updates
+- **Additional Tools:** Chart.js, AJAX for live search and dynamic updates, PHPMailer for email functionality
 - **Dependency Management:** Composer (PHP)
 
 ---
@@ -55,6 +58,7 @@ If you don’t already have Composer installed, follow these steps:
 4. After installation, verify Composer is installed by running in Command Prompt:
    ```bash
    composer -V
+
 
    
 ## 📂 Installation & Setup
